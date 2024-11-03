@@ -72,7 +72,7 @@ st.session_state['tickers'] = tickers
 # Passer les variables globales aux fonctions de rendu des pages
 if page == "Home":
     from home import render_home
-    render_home()
+    render_home(st.session_state['secteur'], sectors)
 
 elif page == "Analyse financière globale au Canada":
     from analyse_glob import render_analyse_glob
