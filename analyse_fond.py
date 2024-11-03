@@ -7,29 +7,57 @@ import json
 import uuid  # For generating a unique session ID
 import logging
 import pprint
+from botocore.exceptions import ClientError
+
 # setting logger
 logging.basicConfig(format='[%(asctime)s] p%(process)s {%(filename)s:%(lineno)d} %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize the Bedrock clients
+class BedrockAgentRuntimeWrapper:
+    """Encapsulates Amazon Bedrock Agents Runtime actions."""
+
+    def __init__(self, runtime_client):
+        self.agents_runtime_client = runtime_client
+
+    def invoke_agent(self, agent_id, agent_alias_id, session_id, prompt):
+        """
+        Sends a prompt for the agent to process and respond to.
+        """
+        try:
+            response = self.agents_runtime_client.invoke_agent(
+                agentId=agent_id,
+                agentAliasId=agent_alias_id,
+                sessionId=session_id,
+                inputText=prompt,
+            )
+
+            completion = ""
+            for event in response.get("completion"):
+                chunk = event["chunk"]
+                completion += chunk["bytes"].decode() + "\n"
+
+            return completion
+
+        except ClientError as e:
+            logger.error(f"Couldn't invoke agent. {e}")
+            raise
+
+# Initialize Bedrock clients and the wrapper
 bedrock_client = boto3.client('bedrock', region_name='us-west-2')
-bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime', region_name='us-west-2')  # Runtime client
+bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime', region_name='us-west-2')
+bedrock_wrapper = BedrockAgentRuntimeWrapper(bedrock_agent_runtime_client)
 
 def get_financial_insights(tickers):
-    # Prepare session details for the Bedrock agent
-    session_id = str(uuid.uuid1())  # Generate a unique session ID
-    enable_trace = False
-    end_session = True
-    agent_id = 'ACVSW7ULXC'  # Your agent ID
-    agent_alias_id = 'FGVZUPEISZ'  # If applicable, otherwise replace with the specific alias
+    session_id = str(uuid.uuid1())
+    agent_id = 'ACVSW7ULXC'
+    agent_alias_id = 'FGVZUPEISZ'
     
-    # Fetch and format company data from yfinance
+    # Prepare company data from yfinance
     company_data = []
     for ticker in tickers:
         stock = yf.Ticker(ticker)
         info = stock.info
         
-        # Extract required fields
         company_details = {
             "ticker": ticker,
             "industry": info.get("industry"),
@@ -54,8 +82,8 @@ def get_financial_insights(tickers):
         }
         company_data.append(company_details)
     
-    # Create formatted text for Bedrock input
-    input_text = "Provide summary of the following information"
+    # Create prompt for Bedrock input
+    input_text = "Provide summary of the following information. Be brief and concise. I want you to also analyse the gender equity, salaries and age of the board. Work with bullet points and line breaks. \n"
     for data in company_data:
         input_text += (
             f"\nCompany: {data['ticker']}\n"
@@ -79,30 +107,15 @@ def get_financial_insights(tickers):
             f"- Held by Institutions: {data['held_percent_institutions']}\n"
         )
     
-    # Add request for a comparison if there are multiple companies
     if len(tickers) > 1:
         input_text += "\nConclude with an overall comparison of the companies listed."
-    print(input_text)
-    # Invoke the agent with the Bedrock runtime client
-    response = bedrock_agent_runtime_client.invoke_agent(
-        inputText=input_text,
-        agentId=agent_id,
-        agentAliasId=agent_alias_id,
-        sessionId=session_id,
-        enableTrace=enable_trace,
-        endSession=end_session
-    )
 
-    logger.info(pprint.pprint(response))
-    
-    # Parse the event stream to capture the response message
-    insights = ""
-    for event in response['completion']:
-        if 'Payload' in event:
-            payload = event['Payload']
-            insights += payload.decode('utf-8')  # Append each chunk of the message
-    
-    # Log the response
+    # Invoke the agent via the BedrockAgentRuntimeWrapper
+    logger.info(f"Invoking agent with prompt:\n{input_text}")
+    insights = bedrock_wrapper.invoke_agent(agent_id, agent_alias_id, session_id, input_text)
+
+    # Log the response for debugging
+    logger.info("Financial insights received:")
     logger.info(insights)
     
     return insights or 'No insights available.'
@@ -114,9 +127,8 @@ def render_analyse_fond(tickers, period):
         st.warning("Veuillez sélectionner au moins une entreprise.")
         return
 
-    # Initialisation d'un DataFrame pour stocker les données financières
+    # Initialize DataFrame for financial data
     data = []
-
     for ticker in tickers:
         stock = yf.Ticker(ticker)
         info = stock.info
@@ -132,16 +144,11 @@ def render_analyse_fond(tickers, period):
             "P/E Ratio (trailing)": info.get('trailingPE', 'N/A'),
             "P/E Ratio (forward)": info.get('forwardPE', 'N/A'),
         }
-
-        # Free Cash Flow
         cash_flow = stock.cashflow.loc["Free Cash Flow"] if "Free Cash Flow" in stock.cashflow.index else None
         row["Free Cash Flow"] = cash_flow.iloc[0] if cash_flow is not None and not cash_flow.empty else 'N/A'
-
         data.append(row)
 
     df = pd.DataFrame(data)
-
-    # Display the comparison table
     st.subheader("Tableau Comparatif des Données Financières")
     st.write(df)
 
