@@ -48,7 +48,7 @@ page = st.sidebar.selectbox("Select Page", ["Home", "Analyse financière globale
 
 # Liste des pages où certains widgets doivent être désactivés
 pages_disabled_tickers_periode = ["Home", "Analyse financière globale au Canada"]
-pages_disabled_secteur = ["Analyse financière globale au Canada"]
+pages_disabled_secteur = ["Home","Analyse financière globale au Canada"]
 
 # Vérifier si la page actuelle est dans la liste des pages désactivées
 disabled_tickers_periode = page in pages_disabled_tickers_periode
