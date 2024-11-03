@@ -15,11 +15,13 @@ sectors = {
 st.sidebar.title("Navigation")
 page = st.sidebar.selectbox("Select Page", ["Home", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique"])
 
-# Liste des pages où les widgets doivent être désactivés
-pages_disabled = ["Home", "Analyse financière globale au Canada"]
+# Liste des pages où certains widgets doivent être désactivés
+pages_disabled_tickers_periode = ["Home", "Analyse financière globale au Canada"]
+pages_disabled_secteur = ["Analyse financière globale au Canada"]  # Garde la sélection du secteur active sur "Home"
 
 # Vérifier si la page actuelle est dans la liste des pages désactivées
-disabled = page in pages_disabled
+disabled_tickers_periode = page in pages_disabled_tickers_periode
+disabled_secteur = page in pages_disabled_secteur
 
 # Initialiser les valeurs par défaut dans st.session_state
 if 'secteur' not in st.session_state:
@@ -34,7 +36,7 @@ secteur = st.sidebar.selectbox(
     "Choisir un secteur canadien :",
     list(sectors.keys()),
     index=list(sectors.keys()).index(st.session_state['secteur']),
-    disabled=disabled,
+    disabled=disabled_secteur,  # Utiliser la condition spécifique pour la désactivation
     on_change=lambda: st.session_state.update({'secteur': secteur})
 )
 
@@ -49,7 +51,7 @@ tickers = st.sidebar.multiselect(
     sectors[secteur],
     default=defaut_tickers,
     max_selections=3,
-    disabled=disabled,
+    disabled=disabled_tickers_periode,  # Utiliser la condition pour les autres widgets
     on_change=lambda: st.session_state.update({'tickers': tickers})
 )
 
@@ -58,7 +60,7 @@ periode = st.sidebar.selectbox(
     "Sélectionnez la période",
     ["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
     index=["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"].index(st.session_state['periode']),
-    disabled=disabled,
+    disabled=disabled_tickers_periode,  # Utiliser la condition pour les autres widgets
     on_change=lambda: st.session_state.update({'periode': periode})
 )
 
@@ -66,10 +68,11 @@ periode = st.sidebar.selectbox(
 st.session_state['secteur'] = secteur
 st.session_state['tickers'] = tickers
 
+
 # Passer les variables globales aux fonctions de rendu des pages
 if page == "Home":
     from home import render_home
-    render_home()
+    render_home(st.session_state['secteur'], sectors)
 
 elif page == "Analyse financière globale au Canada":
     from analyse_glob import render_analyse_glob
