@@ -4,7 +4,7 @@ import streamlit as st
 st.set_page_config(page_title="Analyse financière globale au Canada", layout="wide")
 
 # Add a page selector
-page = st.sidebar.selectbox("Select Page", ["Home", "Analyse financière globale au Canada","Analyse fondamentale"])
+page = st.sidebar.selectbox("Select Page", ["Home", "Analyse financière globale au Canada","Analyse fondamentale","Analyse technique"])
 
 if page == "Home":
     from home import render_home  # Importing the home page function
@@ -17,3 +17,9 @@ elif page == "Analyse financière globale au Canada":
 elif page == "Analyse fondamentale":
     from analyse_fond import render_analyse_fond  # Importing the financial analysis page function
     render_analyse_fond()  # Call the function to render the financial analysis page
+
+elif page == "Analyse technique":
+    from analyse_tech import render_analyse_tech  # Importing the financial analysis page
+    render_analyse_tech()  # Call the function to render the financial analysis page
+
+    
