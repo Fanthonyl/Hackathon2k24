@@ -1,66 +1,85 @@
-import streamlit as st
-import talib
+import pandas as pd
+import numpy as np
 import yfinance as yf
-import matplotlib.pyplot as plt
+import plotly.graph_objects as go
+import streamlit as st
+from datetime import datetime, timedelta
 
-# Configuration de Streamlit
-st.set_page_config(page_title='Analyse Technique des Indicateurs', layout='wide')
-st.title('Analyse Technique des Indicateurs avec TA-Lib')
+def calculate_rsi(data, window=14):
+    delta = data['Close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=window).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=window).mean()
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
 
-# Entrée de l'utilisateur pour sélectionner un actif
-symbol = st.text_input('Entrez le symbole de l\'actif (ex: AAPL)', 'AAPL')
+def calculate_macd(data, short_window=12, long_window=26, signal_window=9):
+    short_ema = data['Close'].ewm(span=short_window, adjust=False).mean()
+    long_ema = data['Close'].ewm(span=long_window, adjust=False).mean()
+    macd = short_ema - long_ema
+    signal_line = macd.ewm(span=signal_window, adjust=False).mean()
+    return macd, signal_line
 
-# Télécharger les données historiques
-if symbol:
-    data = yf.download(symbol, start='2023-01-01', end='2024-01-01')
-    
-    if not data.empty:
-        # Calcul du RSI (Relative Strength Index)
-        data['RSI'] = talib.RSI(data['Close'], timeperiod=14)
+def calculate_obv(data):
+    obv = (np.sign(data['Close'].diff()) * data['Volume']).fillna(0).cumsum()
+    return obv
 
-        # Calcul du MACD (Moving Average Convergence Divergence)
-        data['MACD'], data['MACD_signal'], data['MACD_hist'] = talib.MACD(
-            data['Close'], fastperiod=12, slowperiod=26, signalperiod=9)
+def calculate_bollinger_bands(data, window=20):
+    rolling_mean = data['Close'].rolling(window=window).mean()
+    rolling_std = data['Close'].rolling(window=window).std()
+    upper_band = rolling_mean + (2 * rolling_std)
+    lower_band = rolling_mean - (2 * rolling_std)
+    return rolling_mean, upper_band, lower_band
 
-        # Calcul de l'OBV (On-Balance Volume)
-        data['OBV'] = talib.OBV(data['Close'], data['Volume'])
+def render_analyse_tech(tickers, periode):
+    st.title('Analyse Technique des Actions')
 
-        # Calcul des Bandes de Bollinger
-        upper_band, middle_band, lower_band = talib.BBANDS(
-            data['Close'], timeperiod=20, nbdevup=2, nbdevdn=2, matype=0)
+    if len(tickers) == 0:
+        st.warning("Veuillez sélectionner au moins une entreprise.")
+        return
 
-        data['Upper_Band'] = upper_band
-        data['Middle_Band'] = middle_band
-        data['Lower_Band'] = lower_band
+    # Définir les dates de début et de fin en fonction de la période choisie
+    end_date = pd.to_datetime('today')
+    start_date = pd.to_datetime('today') - pd.DateOffset(
+        months=int(periode[:-1]) * 12 if 'y' in periode else int(periode[:-2]) * 30 if 'mo' in periode else 0
+    )
 
-        # Affichage des graphiques avec Matplotlib
-        st.subheader('Graphiques des Indicateurs Techniques')
-        fig, axs = plt.subplots(3, 1, figsize=(14, 10))
-        
-        # Graphique des prix et des bandes de Bollinger
-        axs[0].plot(data['Close'], label='Prix de clôture', color='blue')
-        axs[0].plot(data['Upper_Band'], label='Bande supérieure', linestyle='--', color='red')
-        axs[0].plot(data['Middle_Band'], label='Moyenne mobile', linestyle='-', color='green')
-        axs[0].plot(data['Lower_Band'], label='Bande inférieure', linestyle='--', color='red')
-        axs[0].fill_between(data.index, data['Lower_Band'], data['Upper_Band'], color='lightgray', alpha=0.3)
-        axs[0].set_title('Bandes de Bollinger et Prix de clôture')
-        axs[0].legend()
+    # Sélection du type de graphique
+    chart_type = st.selectbox('Sélectionnez le type de graphique à afficher :', ['RSI', 'MACD', 'OBV'])
 
-        # Graphique du MACD
-        axs[1].plot(data['MACD'], label='MACD', color='purple')
-        axs[1].plot(data['MACD_signal'], label='Signal', color='orange')
-        axs[1].bar(data.index, data['MACD_hist'], label='Histogramme MACD', color='grey', alpha=0.5)
-        axs[1].set_title('MACD')
-        axs[1].legend()
+    # Récupérer et afficher les données pour chaque entreprise sélectionnée
+    for ticker in tickers:
+        st.subheader(f'Analyse pour {ticker}')
+        data = yf.download(ticker, start=start_date, end=end_date)
 
-        # Graphique du RSI
-        axs[2].plot(data['RSI'], label='RSI', color='green')
-        axs[2].axhline(70, color='red', linestyle='--', label='Surachat')
-        axs[2].axhline(30, color='blue', linestyle='--', label='Survente')
-        axs[2].set_title('RSI (Relative Strength Index)')
-        axs[2].legend()
+        if not data.empty:
+            # Calcul des indicateurs
+            data['RSI'] = calculate_rsi(data)
+            data['MACD'], data['Signal_Line'] = calculate_macd(data)
+            data['OBV'] = calculate_obv(data)
+            data['Rolling Mean'], data['Upper Band'], data['Lower Band'] = calculate_bollinger_bands(data)
 
-        plt.tight_layout()
-        st.pyplot(fig)
-    else:
-        st.error('Données non disponibles pour le symbole spécifié. Veuillez vérifier le symbole et réessayer.')
+            # Afficher le graphique sélectionné
+            if chart_type == 'RSI':
+                fig_rsi = go.Figure()
+                fig_rsi.add_trace(go.Scatter(x=data.index, y=data['RSI'], mode='lines', name='RSI', line=dict(color='blue')))
+                fig_rsi.add_hline(y=30, line=dict(color='red', dash='dash'), annotation_text='Survendu', annotation_position='bottom right')
+                fig_rsi.add_hline(y=70, line=dict(color='green', dash='dash'), annotation_text='Suracheté', annotation_position='top right')
+                fig_rsi.update_layout(title=f'RSI pour {ticker}', xaxis_title='Date', yaxis_title='RSI', height=400, width=600)
+                st.plotly_chart(fig_rsi)
+
+            elif chart_type == 'MACD':
+                fig_macd = go.Figure()
+                fig_macd.add_trace(go.Scatter(x=data.index, y=data['MACD'], mode='lines', name='MACD', line=dict(color='blue')))
+                fig_macd.add_trace(go.Scatter(x=data.index, y=data['Signal_Line'], mode='lines', name='Signal Line', line=dict(color='orange')))
+                fig_macd.update_layout(title=f'MACD pour {ticker}', xaxis_title='Date', yaxis_title='MACD', height=400, width=600)
+                st.plotly_chart(fig_macd)
+
+            elif chart_type == 'OBV':
+                fig_obv = go.Figure()
+                fig_obv.add_trace(go.Scatter(x=data.index, y=data['OBV'], mode='lines', name='OBV', line=dict(color='purple')))
+                fig_obv.update_layout(title=f'OBV pour {ticker}', xaxis_title='Date', yaxis_title='OBV', height=400, width=600)
+                st.plotly_chart(fig_obv)
+
+        else:
+            st.error(f'Aucune donnée trouvée pour {ticker}.')
