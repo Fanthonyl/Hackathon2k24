@@ -1,40 +1,42 @@
 import streamlit as st
-import pandas as pd
 import yfinance as yf
+import pandas as pd
+import plotly.express as px
+from datetime import datetime
 
-def render_home(secteur, sectors):
-    def get_financial_data(ticker):
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        one_month_return = ((info['currentPrice'] / info['twoHundredDayAverage']) - 1) * 100 if 'currentPrice' in info and 'twoHundredDayAverage' in info else None
-        six_month_return = ((info['currentPrice'] / info['fiftyDayAverage']) - 1) * 100 if 'currentPrice' in info and 'fiftyDayAverage' in info else None
-        one_year_return = ((info['currentPrice'] / info['regularMarketPreviousClose']) - 1) * 100 if 'currentPrice' in info and 'regularMarketPreviousClose' in info else None
-        market_cap = info.get('marketCap', None)
-        return one_month_return, six_month_return, one_year_return, market_cap
+def render_home(database):
+    # Récupération des données
+    @st.cache_data
+    def get_data():
+        data = {}
+        end_date = datetime.today()
+        start_date = end_date.replace(year=end_date.year - 1)
 
-    st.title("Investment Analysis Dashboard")
+        for action in database:
+            try:
+                df = yf.download(action['ticker'], start=start_date, end=end_date)["Adj Close"]
+                data[action['domaine']] = data.get(action['domaine'], []) + [df]
+            except Exception as e:
+                st.write(f"Erreur lors du téléchargement pour {action['nom']}: {e}")
 
-    tickers = sectors[secteur]
-    data = pd.DataFrame({'Ticker': tickers})
-    data[['1-Month Return', '6-Month Return', '1-Year Return', 'Market Cap (CAD)']] = data['Ticker'].apply(lambda x: pd.Series(get_financial_data(x)))
+        return data
 
-    st.header(secteur)
-    for index, row in data.iterrows():
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.write(f"**{row['Ticker']}**")
-        with col2:
-            arrow_1m = '⬆️' if row['1-Month Return'] and row['1-Month Return'] > 0 else '⬇️'
-            color_1m = 'green' if row['1-Month Return'] and row['1-Month Return'] > 0 else 'red'
-            st.markdown(f"<p style='color:{color_1m};'>{arrow_1m} 1-Month: {row['1-Month Return']:.2f}%</p>", unsafe_allow_html=True)
-        with col3:
-            arrow_6m = '⬆️' if row['6-Month Return'] and row['6-Month Return'] > 0 else '⬇️'
-            color_6m = 'green' if row['6-Month Return'] and row['6-Month Return'] > 0 else 'red'
-            st.markdown(f"<p style='color:{color_6m};'>{arrow_6m} 6-Month: {row['6-Month Return']:.2f}%</p>", unsafe_allow_html=True)
-        with col4:
-            arrow_1y = '⬆️' if row['1-Year Return'] and row['1-Year Return'] > 0 else '⬇️'
-            color_1y = 'green' if row['1-Year Return'] and row['1-Year Return'] > 0 else 'red'
-            st.markdown(f"<p style='color:{color_1y};'>{arrow_1y} 1-Year: {row['1-Year Return']:.2f}%</p>", unsafe_allow_html=True)
-        st.write(f"Market Cap: {'CAD ' + str(row['Market Cap (CAD)'] / 1e9) + 'B' if row['Market Cap (CAD)'] else 'N/A'}")
-    
-    st.caption("Data sourced from Yahoo Finance.")
+    # Calcul des moyennes par secteur
+    data = get_data()
+    sector_averages = {}
+    for secteur, valeurs in data.items():
+        combined_df = pd.concat(valeurs, axis=1).mean(axis=1)
+        sector_averages[secteur] = combined_df
+
+    # Création du DataFrame pour la visualisation
+    df_plot = pd.DataFrame(sector_averages)
+    df_plot.reset_index(inplace=True)
+    df_plot.rename(columns={"index": "Date"}, inplace=True)
+
+    # Affichage avec Plotly
+    fig = px.line(df_plot, x='Date', y=df_plot.columns[1:], title="Évolution moyenne des valeurs des actions par secteur au Canada (1 an)", labels={"value": "Prix moyen ($CAD)", "variable": "Secteur"})
+    fig.update_layout(legend_title_text='Secteur')
+
+    # Affichage avec Streamlit
+    st.title("Analyse des valeurs moyennes des actions par secteur au Canada")
+    st.plotly_chart(fig)
