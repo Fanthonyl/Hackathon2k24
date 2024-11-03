@@ -1,6 +1,6 @@
 import streamlit as st 
 
-database = [
+database = [ 
     # Agroalimentaire
     {'nom': 'Saputo', 'ticker': 'SAP.TO', 'domaine': 'Agroalimentaire', 'suivi': False},
     {'nom': 'Alimentation Couche-Tard', 'ticker': 'ATD.TO', 'domaine': 'Agroalimentaire', 'suivi': False},
@@ -17,22 +17,8 @@ database = [
     {'nom': 'CAE Inc.', 'ticker': 'CAE.TO', 'domaine': 'Transport', 'suivi': False},
     {'nom': 'Air Canada', 'ticker': 'AC.TO', 'domaine': 'Transport', 'suivi': False},
     {'nom': 'Student Transportation', 'ticker': 'STB.TO', 'domaine': 'Transport', 'suivi': False},
-    # Finance
-    {'nom': 'Royal Bank of Canada', 'ticker': 'RY.TO', 'domaine': 'Finance', 'suivi': False},
-    {'nom': 'Toronto-Dominion Bank', 'ticker': 'TD.TO', 'domaine': 'Finance', 'suivi': False},
-    {'nom': 'Bank of Nova Scotia', 'ticker': 'BNS.TO', 'domaine': 'Finance', 'suivi': False},
-    {'nom': 'Bank of Montreal', 'ticker': 'BMO.TO', 'domaine': 'Finance', 'suivi': False},
-    {'nom': 'Canadian Imperial Bank of Commerce', 'ticker': 'CM.TO', 'domaine': 'Finance', 'suivi': False},
-    {'nom': 'National Bank of Canada', 'ticker': 'NA.TO', 'domaine': 'Finance', 'suivi': False},
-    {'nom': 'Manulife Financial', 'ticker': 'MFC.TO', 'domaine': 'Finance', 'suivi': False},
-    # Technologie
-    {'nom': 'Shopify', 'ticker': 'SHOP.TO', 'domaine': 'Technologie', 'suivi': False},
-    {'nom': 'Constellation Software', 'ticker': 'CSU.TO', 'domaine': 'Technologie', 'suivi': False},
-    {'nom': 'BlackBerry', 'ticker': 'BB.TO', 'domaine': 'Technologie', 'suivi': False},
-    {'nom': 'Lightspeed', 'ticker': 'LSPD.TO', 'domaine': 'Technologie', 'suivi': False},
-    {'nom': 'Dye & Durham', 'ticker': 'DND.TO', 'domaine': 'Technologie', 'suivi': False},
-    {'nom': 'Kinaxis', 'ticker': 'KXS.TO', 'domaine': 'Technologie', 'suivi': False},
-    {'nom': 'Enghouse Systems', 'ticker': 'ENGH.TO', 'domaine': 'Technologie', 'suivi': False},
+    {'nom': 'CPKC', 'ticker': 'N/A', 'domaine': 'Transport', 'suivi': False},
+    {'nom': 'CN', 'ticker': 'N/A', 'domaine': 'Transport', 'suivi': False},
     # Énergie
     {'nom': 'Suncor Energy', 'ticker': 'SU.TO', 'domaine': 'Énergie', 'suivi': False},
     {'nom': 'Enbridge', 'ticker': 'ENB.TO', 'domaine': 'Énergie', 'suivi': False},
@@ -41,19 +27,16 @@ database = [
     {'nom': 'Canadian Natural Resources', 'ticker': 'CNQ.TO', 'domaine': 'Énergie', 'suivi': False},
     {'nom': 'Pembina Pipeline', 'ticker': 'PPL.TO', 'domaine': 'Énergie', 'suivi': False},
     {'nom': 'Gibson Energy', 'ticker': 'GEI.TO', 'domaine': 'Énergie', 'suivi': False},
-    # Santé
-    {'nom': 'Knight Therapeutics', 'ticker': 'GUD.TO', 'domaine': 'Santé', 'suivi': False},
-    {'nom': 'Concordia Healthcare', 'ticker': 'CXR.TO', 'domaine': 'Santé', 'suivi': False},
-    {'nom': 'Northwest Healthcare Properties', 'ticker': 'NHC.TO', 'domaine': 'Santé', 'suivi': False},
-    {'nom': 'Pfizer', 'ticker': 'PFE.TO', 'domaine': 'Santé', 'suivi': False},
-    {'nom': 'AbbVie', 'ticker': 'ABBV.TO', 'domaine': 'Santé', 'suivi': False},
-    {'nom': 'Merck & Co.', 'ticker': 'MRK.TO', 'domaine': 'Santé', 'suivi': False},
-    # Immobilier
-    {'nom': 'RioCan Real Estate', 'ticker': 'REI-UN.TO', 'domaine': 'Immobilier', 'suivi': False},
-    {'nom': 'Canadian Apartment Properties REIT', 'ticker': 'CAR-UN.TO', 'domaine': 'Immobilier', 'suivi': False},
-    {'nom': 'H&R REIT', 'ticker': 'HR-UN.TO', 'domaine': 'Immobilier', 'suivi': False},
-    {'nom': 'Allied Properties REIT', 'ticker': 'AP-UN.TO', 'domaine': 'Immobilier', 'suivi': False},
-    {'nom': 'Dream Industrial REIT', 'ticker': 'DIR-UN.TO', 'domaine': 'Immobilier', 'suivi': False}
+    {'nom': 'AltaGas', 'ticker': 'N/A', 'domaine': 'Énergie', 'suivi': False},
+    # Services publics
+    {'nom': 'Fortis', 'ticker': 'N/A', 'domaine': 'Services publics', 'suivi': False},
+    {'nom': 'Hydro One', 'ticker': 'N/A', 'domaine': 'Services publics', 'suivi': False},
+    # Télécommunications
+    {'nom': 'Cogeco', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False},
+    {'nom': 'Quebecor', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False},
+    {'nom': 'Rogers', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False},
+    {'nom': 'Telus', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False},
+    {'nom': 'Bell Canada', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False}
 ]
 
 # Extraire les domaines et les entreprises correspondantes
