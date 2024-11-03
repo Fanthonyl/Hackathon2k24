@@ -1,70 +1,114 @@
-# analyse_fond.py
 import streamlit as st
 import yfinance as yf
 import pandas as pd
-import matplotlib.pyplot as plt
+import plotly.graph_objs as go
 
 def render_analyse_fond():
-    st.title("Analyse Fondamentale des Entreprises Canadiennes")
+    st.title("Analyse Fondamentale des Entreprises")
 
-    # Input pour le symbole boursier de l'entreprise
-    ticker = st.text_input("Entrez le symbole boursier de l'entreprise (ex: TD pour Toronto-Dominion Bank) :", "TD")
+    # Sélection des entreprises
+    tickers = st.multiselect(
+        "Choisissez de 1 à 3 entreprises (sigles financiers)",
+        ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "FB"],
+        default=["AAPL"],
+        max_selections=3
+    )
 
-    if ticker:
-        # Récupérer les données de l'entreprise
-        stock_data = yf.Ticker(ticker)
+    if len(tickers) == 0:
+        st.warning("Veuillez sélectionner au moins une entreprise.")
+        return
 
-        # Récupérer les états financiers
-        try:
-            balance_sheet = stock_data.balance_sheet
-            income_statement = stock_data.financials
-            cash_flow = stock_data.cashflow
+    # Initialisation d'un DataFrame pour stocker les données financières
+    data = []
 
-            # Calcul des KPI
-            net_income = income_statement.loc['Net Income'][0]
-            total_assets = balance_sheet.loc['Total Assets'][0]
-            total_liabilities = balance_sheet.loc['Total Liabilities Net Minority Interest'][0]
-            total_equity = balance_sheet.loc['Total Equity Gross Minority Interest'][0]
-            cash_flow_value = cash_flow.loc['Total Cash From Operating Activities'][0]
+    # Récupérer les informations pour chaque ticker sélectionné
+    for ticker in tickers:
+        stock = yf.Ticker(ticker)
+        info = stock.info
 
-            # Calculs des ratios
-            return_on_assets = net_income / total_assets * 100
-            debt_to_equity_ratio = total_liabilities / total_equity
+        # Récupérer les données financières et ajouter au tableau
+        row = {
+            "Ticker": ticker,
+            "Current Price": info.get('currentPrice', 'N/A'),
+            "EBITDA": info.get('ebitda', 'N/A'),
+            "ROA": info.get('returnOnAssets', 'N/A'),
+            "ROE": info.get('returnOnEquity', 'N/A'),
+            "EPS (diluted)": info.get('trailingEps', 'N/A'),
+            "Debt-to-Equity": info.get('debtToEquity', 'N/A'),
+            "Net Profit Margin": f"{info.get('profitMargins', 0) * 100:.2f}%" if info.get('profitMargins') is not None else 'N/A',
+            "P/E Ratio (trailing)": info.get('trailingPE', 'N/A'),
+            "P/E Ratio (forward)": info.get('forwardPE', 'N/A'),
+        }
 
-            # Afficher les résultats
-            st.subheader("Ratios Financiers")
-            st.write(f"Return on Assets (ROA): {return_on_assets:.2f}%")
-            st.write(f"Bénéfice Net: {net_income:.2f} CAD")
-            st.write(f"Cash Flow: {cash_flow_value:.2f} CAD")
-            st.write(f"Debt-to-Equity Ratio: {debt_to_equity_ratio:.2f}")
+        # Calcul du Free Cash Flow - on prend la valeur la plus récente
+        cash_flow = stock.cashflow.loc["Free Cash Flow"] if "Free Cash Flow" in stock.cashflow.index else None
+        if cash_flow is not None and not cash_flow.empty:
+            row["Free Cash Flow"] = cash_flow.iloc[0]  # Prend la première valeur, qui est la plus récente
+        else:
+            row["Free Cash Flow"] = 'N/A'
 
-            # Graphiques
-            st.subheader("Graphiques")
-            fig, ax = plt.subplots(2, 2, figsize=(10, 10))
+        data.append(row)
 
-            # Graphique de Return on Assets
-            ax[0, 0].bar([ticker], [return_on_assets], color='blue')
-            ax[0, 0].set_title('Return on Assets')
-            ax[0, 0].set_ylabel('ROA (%)')
+    # Convertir la liste de données en DataFrame
+    df = pd.DataFrame(data)
 
-            # Graphique du Bénéfice Net
-            ax[0, 1].bar([ticker], [net_income], color='green')
-            ax[0, 1].set_title('Bénéfice Net')
-            ax[0, 1].set_ylabel('Bénéfice Net (CAD)')
+    # Afficher le tableau comparatif
+    st.subheader("Tableau Comparatif des Données Financières")
+    st.write(df)
 
-            # Graphique du Cash Flow
-            ax[1, 0].bar([ticker], [cash_flow_value], color='orange')
-            ax[1, 0].set_title('Cash Flow')
-            ax[1, 0].set_ylabel('Cash Flow (CAD)')
+    # Sélection des colonnes à tracer (historical data)
+    st.subheader("Évolution des Stocks dans le Temps")
+    historical_data_options = [
+        "Open",
+        "High",
+        "Low",
+        "Close",
+        "Adj Close",
+        "Volume"
+    ]
+    
+    selected_columns = st.multiselect(
+        "Sélectionnez des éléments à afficher",
+        options=historical_data_options,
+    )
 
-            # Graphique du Debt-to-Equity Ratio
-            ax[1, 1].bar([ticker], [debt_to_equity_ratio], color='red')
-            ax[1, 1].set_title('Debt-to-Equity Ratio')
-            ax[1, 1].set_ylabel('Debt-to-Equity Ratio')
+    # Validate selection
+    if len(selected_columns) == 0:
+        st.warning("Veuillez sélectionner au moins un élément.")
+        return
 
-            plt.tight_layout()
-            st.pyplot(fig)
+    # Sélection de la période
+    period = st.selectbox("Sélectionnez la période", ["1mo", "3mo", "6mo", "1y","2y", "5y", "10y", "ytd", "max"])
 
-        except Exception as e:
-            st.error(f"Une erreur s'est produite lors de la récupération des données : {e}")
+    # Initialisation d'un DataFrame pour stocker les données de stock pour le graphique
+    stock_data_combined = pd.DataFrame()
+
+    # Boucle sur les tickers pour récupérer les données de stock
+    for ticker in tickers:
+        stock_data = yf.download(ticker, period=period)
+
+        for column in selected_columns:
+            stock_data_combined[f"{ticker} - {column}"] = stock_data[column]
+
+    # Créer une figure avec Plotly
+    fig = go.Figure()
+
+    # Ajouter les traces pour chaque colonne sélectionnée
+    for column in selected_columns:
+        for ticker in tickers:
+            fig.add_trace(go.Scatter(x=stock_data_combined.index, 
+                                     y=stock_data_combined[f"{ticker} - {column}"],
+                                     mode='lines', 
+                                     name=f"{ticker} - {column}"))
+
+    # Mettre à jour la mise en page
+    fig.update_layout(
+        title='Comparaison de l\'Évolution des Données',
+        xaxis_title='Date',
+        yaxis_title='Valeur',
+        legend=dict(x=0, y=1, traceorder='normal', orientation='h')
+    )
+
+    # Afficher le graphique
+    st.plotly_chart(fig, use_container_width=True)
 
