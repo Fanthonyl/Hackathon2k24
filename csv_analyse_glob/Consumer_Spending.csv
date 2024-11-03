@@ -1,0 +1,6 @@
+REF_DATE,GEO,DGUID,Quintile,Socio-demographic characteristics,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2023-01-01,Canada,2016A000011124,Highest quintile,Main source of household income: current transfers received - others,Number,223,units,0,v1143727371,1.6.38,44851.0,,,,0
+2023-01-01,Canada,2016A000011124,Highest quintile,Pre-1946,Number,223,units,0,v1143727372,1.6.39,216088.0,,,,0
+2023-01-01,Canada,2016A000011124,Highest quintile,Baby boom,Number,223,units,0,v1143727373,1.6.40,899204.0,,,,0
+2023-01-01,Canada,2016A000011124,Highest quintile,Generation X,Number,223,units,0,v1143727374,1.6.41,1160672.0,,,,0
+2023-01-01,Canada,2016A000011124,Highest quintile,Millennials,Number,223,units,0,v1143727375,1.6.42,1039082.0,,,,0

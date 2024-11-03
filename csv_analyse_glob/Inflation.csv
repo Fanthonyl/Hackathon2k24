@@ -1,0 +1,6 @@
+REF_DATE,GEO,DGUID,Products and product groups,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2024-09-01,"Yellowknife, Northwest Territories",2011A00056106023,Durable goods,2002=100,17,units,0,v41692831,30.275,114.0,,,,1
+2024-09-01,"Yellowknife, Northwest Territories",2011A00056106023,Semi-durable goods,2002=100,17,units,0,v41692832,30.276,112.8,,,,1
+2024-09-01,"Yellowknife, Northwest Territories",2011A00056106023,Non-durable goods,2002=100,17,units,0,v41692833,30.277,193.2,,,,1
+2024-09-01,"Yellowknife, Northwest Territories",2011A00056106023,Services,2002=100,17,units,0,v41692834,30.282,159.0,,,,1
+2024-09-01,"Iqaluit, Nunavut",2011A00056204003,All-items,2002=100,17,units,0,v41713432,31.2,144.2,,,,1

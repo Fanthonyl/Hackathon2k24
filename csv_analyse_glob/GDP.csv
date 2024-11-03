@@ -1,0 +1,6 @@
+REF_DATE,GEO,DGUID,Prices,Seasonal adjustment,Estimates,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2024-04-01,Canada,2016A000011124,"Contributions to percent change, annualized",Seasonally adjusted at annual rates,Imports of goods,Percent,239,units,0,v79448577,1.4.1.27,0.367,,,,3
+2024-04-01,Canada,2016A000011124,"Contributions to percent change, annualized",Seasonally adjusted at annual rates,Imports of services,Percent,239,units,0,v79448578,1.4.1.28,-0.548,,,,3
+2024-04-01,Canada,2016A000011124,"Contributions to percent change, annualized",Seasonally adjusted at annual rates,Statistical discrepancy,Percent,239,units,0,v79448579,1.4.1.29,0.133,,,,3
+2024-04-01,Canada,2016A000011124,"Contributions to percent change, annualized",Seasonally adjusted at annual rates,Gross domestic product at market prices,Percent,239,units,0,v79448580,1.4.1.30,2.139,,,,3
+2024-04-01,Canada,2016A000011124,"Contributions to percent change, annualized",Seasonally adjusted at annual rates,Final domestic demand,Percent,239,units,0,v79448581,1.4.1.31,2.402,,,,3

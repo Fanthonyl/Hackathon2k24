@@ -1,0 +1,6 @@
+REF_DATE,GEO,DGUID,Rates,UOM,UOM_ID,SCALAR_FACTOR,SCALAR_ID,VECTOR,COORDINATE,VALUE,STATUS,SYMBOL,TERMINATED,DECIMALS
+2024-10-01,Canada,2016A000011124,Chartered bank - chequable personal savings deposit rate,Percent,239,units,0,v122506,1.70,,..,,t,2
+2024-10-01,Canada,2016A000011124,Covered differential: Canada-United States 3 month Treasury bills,Percent,239,units,0,v122507,1.71,,..,,t,2
+2024-10-01,Canada,2016A000011124,Covered differential: Canada-United States 3 month short-term paper,Percent,239,units,0,v122508,1.72,,..,,t,2
+2024-10-01,Canada,2016A000011124,First coupon of Canada Savings Bonds,Percent,239,units,0,v122510,1.73,,..,,t,2
+2024-10-01,Canada,2016A000011124,Effective yield to maturity of Canada Savings Bonds,Percent,239,units,0,v122511,1.74,,..,,t,2
