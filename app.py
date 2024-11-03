@@ -53,7 +53,7 @@ sectors_from_db = {domaine: [entry['ticker'] for entry in database if entry['dom
 
 # Sélection du secteur et des entreprises
 st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Select Page", ["Home", "Sentiment", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse financière des secteurs","Board"])
+page = st.sidebar.selectbox("Select Page", ["Home", "Pricer", "Sentiment", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique","Board"])
 
 # Liste des pages où certains widgets doivent être désactivés
 pages_disabled_tickers_periode = ["Home", "Analyse financière globale au Canada", "Sentiment"]
@@ -125,10 +125,14 @@ elif page == "Analyse fondamentale":
     from analyse_fond import render_analyse_fond
     render_analyse_fond(tickers, periode)
 
-elif page == "Analyse financière des secteurs":
+elif page == "Analyse technique":
     from analyse_tech import render_analyse_tech
-    render_analyse_tech()
+    render_analyse_tech(tickers, periode)
 
 elif page == "Board":
     from board import render_board
     render_board()
+
+elif page == "Pricer":
+    from pricer import render_pricer
+    render_pricer()
