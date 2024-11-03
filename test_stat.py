@@ -41,7 +41,7 @@ def save_data_to_csv(table_id, filename):
 for indicator, table_id in table_ids.items():
     filename = f"{indicator.replace(' ', '_')}.csv"  # Create a filename based on the indicator
     save_data_to_csv(table_id, filename)'''
-
+'''
 # Import necessary libraries
 import stats_can
 import pandas as pd
@@ -74,5 +74,30 @@ def display_unique_values(table_id, indicator_name):
 # Iterate through each table and display unique values for categorical columns
 for indicator, table_id in table_ids.items():
     display_unique_values(table_id, indicator)
+'''
+
+import yfinance as yf
+
+# Choisissez une entreprise pour l'exemple
+ticker = "AAPL"  # Exemple avec Apple
+
+# Récupérer les données de l'entreprise
+stock = yf.Ticker(ticker)
+
+# Récupérer les données trimestrielles de l'actif total et du revenu net
+balance_sheet = stock.quarterly_balance_sheet  # Actifs totaux
+income_statement = stock.quarterly_financials  # Revenu net
+
+# Afficher le tableau des actifs totaux et du revenu net pour calculer le ROA
+print("Actifs totaux trimestriels (Total Assets):")
+print(balance_sheet.loc["Total Assets"])
+
+print("\nRevenu net trimestriel (Net Income):")
+print(income_statement.loc["Net Income"])
+
+# Exemple de calcul pour le ROA
+roa = (income_statement.loc["Net Income"] / balance_sheet.loc["Total Assets"]) * 100
+print("\nROA trimestriel (%):")
+print(roa)
 
 
