@@ -1,5 +1,8 @@
 import streamlit as st 
 
+# Configurer la page pour un affichage large
+st.set_page_config(page_title="Analyse des valeurs", layout="wide")
+
 database = [ 
     # Agroalimentaire
     {'nom': 'Saputo', 'ticker': 'SAP.TO', 'domaine': 'Agroalimentaire', 'suivi': False},
