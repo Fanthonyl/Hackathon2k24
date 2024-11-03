@@ -5,6 +5,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
+
 def render_analyse_glob():
     # Function to load and filter data with optional annual variation calculation
     def load_indicator_data(table_id, filters, calculate_variation=False):
@@ -25,7 +26,6 @@ def render_analyse_glob():
             df_annual_change.columns = ['Year', 'Annual Variation (%)']
             return df_annual_change
         else:
-            # Ensure 'VALUE' is numeric before resampling
             df_resampled = df.resample('Y')['VALUE'].mean().reset_index()
             df_resampled.columns = ['Year', 'VALUE']
             return df_resampled[['Year', 'VALUE']]
@@ -59,13 +59,13 @@ def render_analyse_glob():
         calculate_variation=True
     )
 
-    # Rename REF_DATE to Year before merging
+    # Rename columns for merging
     consumer_spending_data.rename(columns={'Annual Variation (%)': 'Consumer Spending Annual Variation (%)'}, inplace=True)
     interest_rate_data.rename(columns={'Annual Variation (%)': 'Interest Rate Annual Variation (%)'}, inplace=True)
     gdp_data.rename(columns={'VALUE': 'GDP Annual Variation (%)'}, inplace=True)
     inflation_data.rename(columns={'Annual Variation (%)': 'Inflation Annual Variation (%)'}, inplace=True)
 
-    # Merge datasets into a single summarized table
+    # Merge datasets
     summary_df = consumer_spending_data.merge(
         interest_rate_data, on='Year', how='outer'
     ).merge(
@@ -74,116 +74,67 @@ def render_analyse_glob():
         inflation_data, on='Year', how='outer'
     )
 
-    # Convert 'Year' from datetime to just the year as a string
+    # Convert 'Year' to string
     summary_df['Year'] = summary_df['Year'].dt.year.astype(str).str.strip()
     summary_df.set_index('Year', inplace=True)
 
-    # Display the summarized table below the graphs
-    st.subheader("Summary of Annual Variations")
-    st.write(summary_df)
 
-    # Create subplots for Consumer Spending, GDP, Inflation and Interest Rate with a secondary y-axis
+    # Sort DataFrame by Year in descending order
+    summary_df.sort_index(ascending=False, inplace=True)
+
+    # Create combined plot with all curves
     fig = make_subplots(specs=[[{"secondary_y": True}]])
 
-    # Add Consumer Spending Annual Variation
+    # Add traces for all indicators
     fig.add_trace(
         go.Scatter(x=consumer_spending_data['Year'], 
-                   y=consumer_spending_data['Consumer Spending Annual Variation (%)'], 
-                   name="Consumer Spending Annual Variation (%)"),
+                y=consumer_spending_data['Consumer Spending Annual Variation (%)'], 
+                name="Consumer Spending Annual Variation (%)"),
         secondary_y=False
     )
-
-    # Add GDP Annual Variation
     fig.add_trace(
         go.Scatter(x=gdp_data['Year'], 
-                   y=gdp_data['GDP Annual Variation (%)'], 
-                   name="GDP Annual Variation (%)"),
+                y=gdp_data['GDP Annual Variation (%)'], 
+                name="GDP Annual Variation (%)"),
         secondary_y=False
     )
-
-    # Add Inflation Annual Variation
     fig.add_trace(
         go.Scatter(x=inflation_data['Year'], 
-                   y=inflation_data['Inflation Annual Variation (%)'], 
-                   name="Inflation Annual Variation (%)"),
+                y=inflation_data['Inflation Annual Variation (%)'], 
+                name="Inflation Annual Variation (%)"),
         secondary_y=False
     )
-
-    # Add Interest Rate Annual Variation to secondary y-axis
     fig.add_trace(
         go.Scatter(x=interest_rate_data['Year'], 
-                   y=interest_rate_data['Interest Rate Annual Variation (%)'], 
-                   name="Interest Rate Annual Variation (%)"),
+                y=interest_rate_data['Interest Rate Annual Variation (%)'], 
+                name="Interest Rate Annual Variation (%)"),
         secondary_y=True
     )
 
-    # Update layout for better visuals
+    # Update layout
     fig.update_layout(
-        title="Annual Variations for Key Indicators",
-        xaxis_title="Year",
-        yaxis_title="Annual Variation (%)",
-        yaxis2_title="Interest Rate (%)",
-        legend_title="Indicators",
+        xaxis_title="Année",
+        yaxis_title="Variation annuelle (%)",
+        yaxis2_title="Taux d\'intérêt (%)",
+        legend_title="Indicateurs",
         template="plotly_white"
     )
 
-    # Show the combined plot with separate y-axes
+    st.title("Analyse des valeurs moyennes des actions par secteur au Canada")
+    # Display the combined plot
     st.plotly_chart(fig)
 
-    # Set up a two-column layout
-    col1, col2 = st.columns(2)
+    # Button to display detailed table
+    if st.button("Afficher la table de données"):
+        st.subheader("Tableau des indicateurs financiers")
+        st.dataframe(summary_df)
 
-    # Display Consumer Spending Annual Variation
-    with col1:
-        fig1 = px.line(
-            consumer_spending_data, 
-            x='Year', 
-            y='Consumer Spending Annual Variation (%)', 
-            title="Annual Variation in Consumer Spending",
-            labels={"Year": "Year"}  # Rename x-axis to "Year"
-        )
-        st.plotly_chart(fig1)
-
-    # Display Interest Rate Annual Variation (this can be removed if you already show it in the summary)
-    with col2:
-        fig2 = px.line(
-            interest_rate_data, 
-            x='Year', 
-            y='Interest Rate Annual Variation (%)', 
-            title="Annual Variation in Bank Rate",
-            labels={"Year": "Year"}  # Rename x-axis to "Year"
-        )
-        st.plotly_chart(fig2)
-
-    # New row for GDP and Inflation
-    col3, col4 = st.columns(2)
-
-    # Display GDP with renamed y-axis label and x-axis label
-    with col3:
-        fig3 = px.line(
-            gdp_data, 
-            x='Year', 
-            y='GDP Annual Variation (%)', 
-            title="Annual Variation in GDP at Market Prices",
-            labels={"Year": "Year", "GDP Annual Variation (%)": "Annual Variation (%)"}  # Rename both axes
-        )
-        st.plotly_chart(fig3)
-
-    # Display Inflation Annual Variation
-    with col4:
-        fig4 = px.line(
-            inflation_data, 
-            x='Year', 
-            y='Inflation Annual Variation (%)', 
-            title="Annual Variation in Inflation",
-            labels={"Year": "Year"}  # Rename x-axis to "Year"
-        )
-        st.plotly_chart(fig4)
-
-    # Additional information or explanations for the dashboard
+    # Additional information or explanations
     st.markdown("""
-    This dashboard presents key financial indicators for Canada from 2014 to the present, with selected filters applied.
-    The annual variations in Consumer Spending, Interest Rate, and Inflation provide insights into year-over-year changes, 
-    while the GDP plot presents absolute values. 
+    Ce tableau de bord présente les principaux indicateurs financiers pour le Canada de 2014 à aujourd’hui, avec des filtres sélectionnés.
+    Les variations annuelles des dépenses de consommation, du taux d’intérêt et de l’inflation donnent une idée des changements d’une année à l’autre. 
+    tandis que le graphique du PIB présente des valeurs absolues.
+
     """)
 
+    st.subheader("Board")
