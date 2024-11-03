@@ -14,24 +14,75 @@ logger = logging.getLogger(__name__)
 # Initialize the Bedrock clients
 bedrock_client = boto3.client('bedrock', region_name='us-west-2')
 bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime', region_name='us-west-2')  # Runtime client
-sts_client = boto3.client('sts', region_name='us-west-2')
-iam_client = boto3.client('iam', region_name='us-west-2')
-lambda_client = boto3.client('lambda', region_name='us-west-2')
-bedrock_agent_client = boto3.client('bedrock-agent', region_name='us-west-2')
 
 def get_financial_insights(tickers):
-    # Prepare session details
+    # Prepare session details for the Bedrock agent
     session_id = str(uuid.uuid1())  # Generate a unique session ID
     enable_trace = False
-    end_session = False
+    end_session = True
     agent_id = 'ACVSW7ULXC'  # Your agent ID
-    agent_alias_id = 'CMUYMTYKA7'  # If applicable, otherwise replace with the specific alias
-
-    # Define the input text for insights
-    input_text = f"Provide financial insights for the following companies: {', '.join(tickers)}."
-    #input_text = f"Say Hello to me"
-    #print(f"Input text: {input_text}")
-
+    agent_alias_id = 'FGVZUPEISZ'  # If applicable, otherwise replace with the specific alias
+    
+    # Fetch and format company data from yfinance
+    company_data = []
+    for ticker in tickers:
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        
+        # Extract required fields
+        company_details = {
+            "ticker": ticker,
+            "industry": info.get("industry"),
+            "business_summary": info.get("longBusinessSummary"),
+            "full_time_employees": info.get("fullTimeEmployees"),
+            "company_officers": [
+                {
+                    "name": officer.get("name"),
+                    "age": officer.get("age"),
+                    "title": officer.get("title"),
+                    "total_pay": officer.get("totalPay")
+                }
+                for officer in info.get("companyOfficers", []) if officer
+            ],
+            "audit_risk": info.get("auditRisk"),
+            "board_risk": info.get("boardRisk"),
+            "compensation_risk": info.get("compensationRisk"),
+            "shareholder_rights_risk": info.get("shareHolderRightsRisk"),
+            "overall_risk": info.get("overallRisk"),
+            "held_percent_insiders": info.get("heldPercentInsiders"),
+            "held_percent_institutions": info.get("heldPercentInstitutions"),
+        }
+        company_data.append(company_details)
+    
+    # Create formatted text for Bedrock input
+    input_text = "Provide summary of the following information"
+    for data in company_data:
+        input_text += (
+            f"\nCompany: {data['ticker']}\n"
+            f"- Industry: {data['industry']}\n"
+            f"- Business Summary: {data['business_summary']}\n"
+            f"- Full-Time Employees: {data['full_time_employees']}\n"
+            "- Key Officers:\n"
+        )
+        for officer in data["company_officers"]:
+            input_text += (
+                f"  - Name: {officer['name']}, Age: {officer['age']}, Title: {officer['title']}, "
+                f"Total Pay: {officer['total_pay']}\n"
+            )
+        input_text += (
+            f"- Audit Risk: {data['audit_risk']}\n"
+            f"- Board Risk: {data['board_risk']}\n"
+            f"- Compensation Risk: {data['compensation_risk']}\n"
+            f"- Shareholder Rights Risk: {data['shareholder_rights_risk']}\n"
+            f"- Overall Risk: {data['overall_risk']}\n"
+            f"- Held by Insiders: {data['held_percent_insiders']}\n"
+            f"- Held by Institutions: {data['held_percent_institutions']}\n"
+        )
+    
+    # Add request for a comparison if there are multiple companies
+    if len(tickers) > 1:
+        input_text += "\nConclude with an overall comparison of the companies listed."
+    print(input_text)
     # Invoke the agent with the Bedrock runtime client
     response = bedrock_agent_runtime_client.invoke_agent(
         inputText=input_text,
@@ -41,12 +92,20 @@ def get_financial_insights(tickers):
         enableTrace=enable_trace,
         endSession=end_session
     )
+
     logger.info(pprint.pprint(response))
-
-    # Parse the response
-    insights = response.get('message', 'No insights available.')
-    return insights
-
+    
+    # Parse the event stream to capture the response message
+    insights = ""
+    for event in response['completion']:
+        if 'Payload' in event:
+            payload = event['Payload']
+            insights += payload.decode('utf-8')  # Append each chunk of the message
+    
+    # Log the response
+    logger.info(insights)
+    
+    return insights or 'No insights available.'
 
 def render_analyse_fond(tickers, period):
     st.title("Analyse Fondamentale des Entreprises")
