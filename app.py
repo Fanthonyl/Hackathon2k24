@@ -13,10 +13,10 @@ sectors = {
 
 # Sélection du secteur et des entreprises
 st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Select Page", ["Home", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique"])
+page = st.sidebar.selectbox("Select Page", ["Home", "Sentiment", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique"])
 
 # Liste des pages où certains widgets doivent être désactivés
-pages_disabled_tickers_periode = ["Home", "Analyse financière globale au Canada"]
+pages_disabled_tickers_periode = ["Home", "Analyse financière globale au Canada", "Sentiment"]
 pages_disabled_secteur = ["Analyse financière globale au Canada"]  # Garde la sélection du secteur active sur "Home"
 
 # Vérifier si la page actuelle est dans la liste des pages désactivées
@@ -74,6 +74,10 @@ if page == "Home":
     from home import render_home
     render_home(st.session_state['secteur'], sectors)
 
+elif page == "Sentiment":
+    from sentiment import render_sentiment
+    render_sentiment()
+    
 elif page == "Analyse financière globale au Canada":
     from analyse_glob import render_analyse_glob
     render_analyse_glob()
