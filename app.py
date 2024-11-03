@@ -3,7 +3,7 @@ import streamlit as st
 # Configurer la page pour un affichage large
 st.set_page_config(page_title="Analyse des valeurs", layout="wide")
 
-database = [ 
+database = [
     # Agroalimentaire
     {'nom': 'Saputo', 'ticker': 'SAP.TO', 'domaine': 'Agroalimentaire', 'suivi': False},
     {'nom': 'Alimentation Couche-Tard', 'ticker': 'ATD.TO', 'domaine': 'Agroalimentaire', 'suivi': False},
@@ -20,8 +20,6 @@ database = [
     {'nom': 'CAE Inc.', 'ticker': 'CAE.TO', 'domaine': 'Transport', 'suivi': False},
     {'nom': 'Air Canada', 'ticker': 'AC.TO', 'domaine': 'Transport', 'suivi': False},
     {'nom': 'Student Transportation', 'ticker': 'STB.TO', 'domaine': 'Transport', 'suivi': False},
-    {'nom': 'CPKC', 'ticker': 'N/A', 'domaine': 'Transport', 'suivi': False},
-    {'nom': 'CN', 'ticker': 'N/A', 'domaine': 'Transport', 'suivi': False},
     # Énergie
     {'nom': 'Suncor Energy', 'ticker': 'SU.TO', 'domaine': 'Énergie', 'suivi': False},
     {'nom': 'Enbridge', 'ticker': 'ENB.TO', 'domaine': 'Énergie', 'suivi': False},
@@ -30,24 +28,32 @@ database = [
     {'nom': 'Canadian Natural Resources', 'ticker': 'CNQ.TO', 'domaine': 'Énergie', 'suivi': False},
     {'nom': 'Pembina Pipeline', 'ticker': 'PPL.TO', 'domaine': 'Énergie', 'suivi': False},
     {'nom': 'Gibson Energy', 'ticker': 'GEI.TO', 'domaine': 'Énergie', 'suivi': False},
-    {'nom': 'AltaGas', 'ticker': 'N/A', 'domaine': 'Énergie', 'suivi': False},
+    {'nom': 'AltaGas', 'ticker': 'ALA.TO', 'domaine': 'Énergie', 'suivi': False},
     # Services publics
-    {'nom': 'Fortis', 'ticker': 'N/A', 'domaine': 'Services publics', 'suivi': False},
-    {'nom': 'Hydro One', 'ticker': 'N/A', 'domaine': 'Services publics', 'suivi': False},
+    {'nom': 'Fortis', 'ticker': 'FTS.TO', 'domaine': 'Services publics', 'suivi': False},
+    {'nom': 'Hydro One', 'ticker': 'H.TO', 'domaine': 'Services publics', 'suivi': False},
     # Télécommunications
-    {'nom': 'Cogeco', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False},
-    {'nom': 'Quebecor', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False},
-    {'nom': 'Rogers', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False},
-    {'nom': 'Telus', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False},
-    {'nom': 'Bell Canada', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False}
-]
+    {'nom': 'Cogeco', 'ticker': 'CGO.TO', 'domaine': 'Télécommunications', 'suivi': False},
+    {'nom': 'Quebecor', 'ticker': 'QBR-B.TO', 'domaine': 'Télécommunications', 'suivi': False},
+    {'nom': 'Rogers', 'ticker': 'RCI-B.TO', 'domaine': 'Télécommunications', 'suivi': False},
+    {'nom': 'Telus', 'ticker': 'T.TO', 'domaine': 'Télécommunications', 'suivi': False},
+    {'nom': 'Bell Canada', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False},
+    # Technologie
+    {'nom': 'Shopify', 'ticker': 'SHOP.TO', 'domaine': 'Technologie', 'suivi': False},
+    {'nom': 'Constellation Software', 'ticker': 'CSU.TO', 'domaine': 'Technologie', 'suivi': False},
+    {'nom': 'BlackBerry', 'ticker': 'BB.TO', 'domaine': 'Technologie', 'suivi': False},
+    {'nom': 'Lightspeed', 'ticker': 'LSPD.TO', 'domaine': 'Technologie', 'suivi': False},
+    {'nom': 'Dye & Durham', 'ticker': 'DND.TO', 'domaine': 'Technologie', 'suivi': False},
+    {'nom': 'Kinaxis', 'ticker': 'KXS.TO', 'domaine': 'Technologie', 'suivi': False},
+    {'nom': 'Enghouse Systems', 'ticker': 'ENGH.TO', 'domaine': 'Technologie', 'suivi': False}
+    ]
 
 # Extraire les domaines et les entreprises correspondantes
 sectors_from_db = {domaine: [entry['ticker'] for entry in database if entry['domaine'] == domaine] for domaine in set(entry['domaine'] for entry in database)}
 
 # Sélection du secteur et des entreprises
 st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Select Page", ["Home", "Sentiment", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse financière des secteurs"])
+page = st.sidebar.selectbox("Select Page", ["Home", "Pricer", "Sentiment", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique","Board"])
 
 # Liste des pages où certains widgets doivent être désactivés
 pages_disabled_tickers_periode = ["Home", "Analyse financière globale au Canada", "Sentiment"]
@@ -119,6 +125,14 @@ elif page == "Analyse fondamentale":
     from analyse_fond import render_analyse_fond
     render_analyse_fond(tickers, periode)
 
-elif page == "Analyse financière des secteurs":
+elif page == "Analyse technique":
     from analyse_tech import render_analyse_tech
-    render_analyse_tech()
+    render_analyse_tech(tickers, periode)
+
+elif page == "Board":
+    from board import render_board
+    render_board()
+
+elif page == "Pricer":
+    from pricer import render_pricer
+    render_pricer()
