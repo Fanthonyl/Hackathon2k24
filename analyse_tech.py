@@ -40,8 +40,8 @@ def render_analyse_tech(tickers, periode):
 
     # Définir les dates de début et de fin en fonction de la période choisie
     end_date = pd.to_datetime('today')
-    start_date = pd.to_datetime('today') - pd.DateOffset(
-        months=int(periode[:-1]) * 12 if 'y' in periode else int(periode[:-2]) * 30 if 'mo' in periode else 0
+    start_date = end_date - pd.DateOffset(
+        months=int(periode[:-1]) * 12 if 'y' in periode else int(periode[:-2]) if 'mo' in periode else 0
     )
 
     # Sélection du type de graphique
