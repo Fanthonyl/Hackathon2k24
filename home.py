@@ -7,7 +7,7 @@ from datetime import datetime
 
 def render_home(database):
     # Récupération des données
-    @st.cache_data
+    #@st.cache_data
     def get_data():
         data = {}
         end_date = datetime.today()
