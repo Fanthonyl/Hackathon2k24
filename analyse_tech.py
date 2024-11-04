@@ -110,41 +110,48 @@ st.markdown("Alexia vous aide à suivre les tendances des principaux KPIs techni
 if 'secteur' not in st.session_state:
     st.session_state['secteur'] = 'Agroalimentaire'
 if 'tickers' not in st.session_state:
-    st.session_state['tickers'] = ['SAP.TO']
+    st.session_state['tickers'] = ['SAP.TO','L.TO']
 if 'periode' not in st.session_state:
-    st.session_state['periode'] = '1mo'
+    st.session_state['periode'] = '1y'
 
-secteur = st.selectbox(
-    "Choisir un secteur canadien :",
-    list(sectors_from_db.keys()),
-    index=list(sectors_from_db.keys()).index(st.session_state['secteur']),
-    on_change=lambda: st.session_state.update({'secteur': secteur})
-)
+col1, col2 = st.columns(2)
+with col1:
 
-tickers = st.multiselect(
-    "Choisissez une ou plusieurs entreprises (sigles financiers)",
-    sectors_from_db[secteur],
-    default=[ticker for ticker in st.session_state['tickers'] if ticker in sectors_from_db[secteur]],
-    on_change=lambda: st.session_state.update({'tickers': tickers})
-)
+    secteur = st.selectbox(
+        "Choisir un secteur canadien :",
+        list(sectors_from_db.keys()),
+        index=list(sectors_from_db.keys()).index(st.session_state['secteur']),
+        on_change=lambda: st.session_state.update({'secteur': secteur})
+    )
 
-periode = st.selectbox(
-    "Sélectionnez la période",
-    ["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
-    index=["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"].index(st.session_state['periode']),
-    on_change=lambda: st.session_state.update({'periode': periode})
-)
+with col2:
+    tickers = st.multiselect(
+        "Choisissez une ou plusieurs entreprises (sigles financiers)",
+        sectors_from_db[secteur],
+        default=[ticker for ticker in st.session_state['tickers'] if ticker in sectors_from_db[secteur]],
+        on_change=lambda: st.session_state.update({'tickers': tickers})
+    )
 
-if len(tickers) == 0:
-    st.warning("Veuillez sélectionner au moins une entreprise.")
-    st.stop()
+col1, col2 = st.columns(2)
+with col1:
+    periode = st.selectbox(
+        "Sélectionnez la période",
+        ["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
+        index=["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"].index(st.session_state['periode']),
+        on_change=lambda: st.session_state.update({'periode': periode})
+    )
+
+    if len(tickers) == 0:
+        st.warning("Veuillez sélectionner au moins une entreprise.")
+        st.stop()
     
 end_date = pd.to_datetime('today')
 start_date = end_date - pd.DateOffset(
     months=int(periode[:-1]) * 12 if 'y' in periode else int(periode[:-2]) if 'mo' in periode else 0
 )
 
-chart_type = st.selectbox('Sélectionnez le type de graphique à afficher :', ['RSI', 'MACD', 'OBV'])
+with col2:
+    chart_type = st.selectbox('Sélectionnez le type de graphique à afficher :', ['RSI', 'MACD', 'OBV'])
 
 kpi_values = []
 
@@ -197,12 +204,10 @@ for i, ticker in enumerate(tickers):
 # Add Analyser button
 if st.button("Analyser"):
     try:
-        # Prepare the prompt
-        insights = get_financial_insights(kpi_values)
-        st.subheader("Insights sur les actions sélectionnées :")
-        st.markdown(insights)
+        with st.spinner("AlexIA est en pleine analyse..."):
+            # Prepare the prompt
+            insights = get_financial_insights(kpi_values)
+            st.subheader("Insights sur les actions sélectionnées :")
+            st.markdown(insights)
     except Exception as e:
         st.error(f"Erreur lors de l'analyse : {str(e)}")
-else:
-    st.warning("Aucune analyse possible.")
-
