@@ -68,11 +68,13 @@ def render_home(database):
 
     st.subheader("Analyse des valeurs moyennes des actions par secteur au Canada")
 
-    time_span = st.selectbox(
-        "Sélectionnez la période pour l'analyse:",
-        ["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
-        index=3
-    )
+    col1, col2 = st.columns([10, 1])
+    with col2:
+        time_span = st.selectbox(
+            "# Période:",
+            ["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
+            index=3
+        )
 
     def get_data():
         data = {}
@@ -83,39 +85,68 @@ def render_home(database):
             except Exception as e:
                 pass
         return data
+    
+    with col1:
+        # Show a spinner while loading the data and generating the plot
+        with st.spinner("AlexIA s'applique à dessiner..."):
+            data = get_data()
+            sector_averages = {}
+            for secteur, valeurs in data.items():
+                combined_df = pd.concat(valeurs, axis=1).mean(axis=1)
+                sector_averages[secteur] = combined_df
 
-    # Show a spinner while loading the data and generating the plot
-    with st.spinner("AlexIA s'applique à dessiner..."):
-        data = get_data()
-        sector_averages = {}
-        for secteur, valeurs in data.items():
-            combined_df = pd.concat(valeurs, axis=1).mean(axis=1)
-            sector_averages[secteur] = combined_df
+                df_plot = pd.DataFrame(sector_averages)
+                df_plot.reset_index(inplace=True)
+                df_plot.rename(columns={"index": "Date"}, inplace=True)
 
-        df_plot = pd.DataFrame(sector_averages)
-        df_plot.reset_index(inplace=True)
-        df_plot.rename(columns={"index": "Date"}, inplace=True)
-
-        fig = make_subplots(specs=[[{"secondary_y": True}]])
-        for col in df_plot.columns[1:]:
-            if col != "Technologie":
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+                for col in df_plot.columns[1:]:
+                    if col != "Technologie":
+                        fig.add_trace(
+                            go.Scatter(x=df_plot['Date'], y=df_plot[col], name=col),
+                            secondary_y=False
+                        )
                 fig.add_trace(
-                    go.Scatter(x=df_plot['Date'], y=df_plot[col], name=col),
-                    secondary_y=False
+                    go.Scatter(x=df_plot['Date'], y=df_plot['Technologie'], name='Technologie', line=dict(color='red')),
+                    secondary_y=True
                 )
-        fig.add_trace(
-            go.Scatter(x=df_plot['Date'], y=df_plot['Technologie'], name='Technologie', line=dict(color='red')),
-            secondary_y=True
+
+                fig.update_layout(
+                    title="Évolution moyenne des valeurs des actions par secteur au Canada",
+                    xaxis_title="Date",
+                    legend_title_text='Secteur'
+                )
+                fig.update_yaxes(title_text="Prix moyen ($CAD)", secondary_y=False)
+                fig.update_yaxes(title_text="Prix moyen ($CAD) - Technologie", secondary_y=True)
+                st.plotly_chart(fig)
+                # Function to calculate percentage change for each sector
+
+    def calculate_metrics(df):
+        metrics = {}
+        for col in df.columns[1:]:  # Skip the 'Date' column
+            start_value = df[col].iloc[0]
+            end_value = df[col].iloc[-1]
+            if start_value != 0:
+                change = ((end_value - start_value) / start_value) * 100
+            else:
+                change = 0  # Handle division by zero
+            metrics[col] = change
+        return metrics
+
+    # Calculate metrics for each sector
+    metrics = calculate_metrics(df_plot)
+
+    # Display the metrics as columns
+    st.subheader("Variation par secteur (en CAD)")
+    metric_columns = st.columns(len(metrics))
+
+    for i, (sector, change) in enumerate(metrics.items()):
+        metric_columns[i].metric(
+            label=sector,
+            value=f"{df_plot[sector].iloc[-1]:.2f} $",
+            delta=f"{change:.2f}%"
         )
 
-        fig.update_layout(
-            title="Évolution moyenne des valeurs des actions par secteur au Canada",
-            xaxis_title="Date",
-            legend_title_text='Secteur'
-        )
-        fig.update_yaxes(title_text="Prix moyen ($CAD)", secondary_y=False)
-        fig.update_yaxes(title_text="Prix moyen ($CAD) - Technologie", secondary_y=True)
-        st.plotly_chart(fig)
 
     # Downsample data only for the LLM prompt
     def get_downsampled_prompt(df, max_points=30):

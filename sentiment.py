@@ -23,7 +23,7 @@ def multi_colormap_semi(database, selected_company, other_companies):
     all_companies = [selected_company] + other_companies
 
     for nom in all_companies:
-        with st.spinner(f"Analyse des avis utilisateurs pour {nom}..."):
+        with st.spinner(f"Analyse des tendances utilisateurs en temps réel pour pour {nom}..."):
             URL = f"https://twstalker.com/search/{nom}"
             page = requests.get(URL)
             soup = BeautifulSoup(page.content, "html.parser")
@@ -88,8 +88,8 @@ def multi_colormap_semi(database, selected_company, other_companies):
 
     fig.update_layout(
         height=150 + len(noms) * 50,
-        title='Sentiment positif global des entreprises sélectionnées',
-        xaxis_title='Pourcentage de sentiment positif global',
+        title='Analyse en temps réel de la popularité des entreprises du marché',
+        xaxis_title='Pourcentage d\'opinions positives au sein du grand public',
         xaxis=dict(range=[0, 100]),
         yaxis=dict(autorange='reversed'),
         barmode='group',
@@ -107,6 +107,7 @@ def multi_colormap_semi(database, selected_company, other_companies):
 def render_sentiment(database):
 
 
+
     if 'fig_multi_colormap' not in st.session_state:
         st.session_state['fig_multi_colormap'] = None
 
@@ -116,22 +117,28 @@ def render_sentiment(database):
 
     st.title("Analyse de Sentiments")
     
+    st.image("alexia.png", caption="Description de l'image")
+    
     # Extraire les secteurs à partir de la base de données
     sectors_from_db = get_sectors_from_db(database)
 
+    st.write("Découvrez l'analyse détaillée des sentiments des utilisateurs envers les entreprises et les secteurs spécifiques. Identifiez les opinions positives, négatives, et neutres à travers des données collectées sur les réseaux sociaux.")
+
+
     # Ajout de la sélection du secteur
-    #st.subheader("Sélection d'une entreprise")
+    st.subheader("Sélection d'une entreprise à analyser")
+    
     selected_sector = st.selectbox(
-        "Choisissez un secteur :",
+        "Sélectionnez un secteur industriel pour explorer les entreprises qui y sont associées :",
         list(sectors_from_db.keys())
     )
-
+    
     # Formater les entreprises comme "Nom (Ticker)"
     formatted_companies = [f"{nom} ({ticker})" for ticker, nom in sectors_from_db[selected_sector]]
 
     # Ajout de la sélection d'une entreprise spécifique
     selected_company = st.selectbox(
-        "Choisissez une entreprise :",
+        "Sélectionnez l'entreprise que vous souhaitez analyser et comparer au reste du marché :",
         formatted_companies
     )
 
@@ -144,7 +151,10 @@ def render_sentiment(database):
         st.plotly_chart(st.session_state['fig_entreprise_vs_clients'], key="entreprise_vs_clients_reloaded")
 
     # Ajout de la case à cocher pour sélectionner/désélectionner toutes les entreprises
-    st.subheader("Sélection des autres entreprises")
+    st.subheader("Analyse comparative avec les autres entreprises du marché")
+    
+    st.write("Sélectionnez les entreprises que vous souhaitez inclure dans l'analyse comparative des sentiments. Cette option permet de visualiser les opinions sur plusieurs entreprises afin de voir comment elles se comparent entre elles.")
+    
     select_all = st.checkbox("Tout sélectionner / Tout désélectionner", value=False)
 
     checkboxes = {}
@@ -241,7 +251,7 @@ def entreprise_vs_clients(nom):
 
     fig = go.Figure(data=[
         go.Bar(
-            y=["utilisateurs", nom_original],
+            y=["Opinion publique", nom_original],
             x=cursor_positions,
             orientation='h',
             marker_color=colors,
@@ -254,9 +264,9 @@ def entreprise_vs_clients(nom):
 
     fig.update_layout(
         height=250,
-        title=f"Taux de sentiments positifs pour {nom_original}, communiqués par eux-mêmes et par les utilisateurs",
-        xaxis_title=f"Taux de sentiments positifs pour {nom_original}, communiqués par eux-mêmes et par les utilisateurs",
-        yaxis_title="Catégorie",
+        title=f"Analyse en temps réel des taux de sentiments positifs pour {nom_original}, en fonction de leurs communiqués et de l'opinion publique",
+        xaxis_title=f"Taux de sentiments positifs pour {nom_original} selon des utilisateurs",
+        yaxis_title="",
         template='plotly_dark',
         xaxis=dict(
             range=[0, 1]

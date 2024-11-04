@@ -37,7 +37,6 @@ database = [
     {'nom': 'Quebecor', 'ticker': 'QBR-B.TO', 'domaine': 'Télécommunications', 'suivi': False},
     {'nom': 'Rogers', 'ticker': 'RCI-B.TO', 'domaine': 'Télécommunications', 'suivi': False},
     {'nom': 'Telus', 'ticker': 'T.TO', 'domaine': 'Télécommunications', 'suivi': False},
-    {'nom': 'Bell Canada', 'ticker': 'N/A', 'domaine': 'Télécommunications', 'suivi': False},
     # Technologie
     {'nom': 'Shopify', 'ticker': 'SHOP.TO', 'domaine': 'Technologie', 'suivi': False},
     {'nom': 'Constellation Software', 'ticker': 'CSU.TO', 'domaine': 'Technologie', 'suivi': False},
@@ -91,7 +90,7 @@ elif page == "Analyse financière globale au Canada":
 
 elif page == "Analyse fondamentale":
     from analyse_fond import render_analyse_fond
-    render_analyse_fond()
+    render_analyse_fond(database)
 
 elif page == "Analyse technique":
     from analyse_tech import render_analyse_tech
@@ -103,4 +102,4 @@ elif page == "Board":
 
 elif page == "Pricer":
     from pricer import render_pricer
-    render_pricer()
+    render_pricer(database)
