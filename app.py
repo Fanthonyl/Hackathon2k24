@@ -1,7 +1,7 @@
 import streamlit as st 
 
 # Configurer la page pour un affichage large
-st.set_page_config(page_title="Analyse des valeurs", page_icon="alexia2.png", layout="wide")
+st.set_page_config(page_title="AlexIA", page_icon="alexia2.png", layout="wide")
 
 # Configurer les pages pour la navigation
 pages = {
