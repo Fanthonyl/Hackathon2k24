@@ -49,7 +49,7 @@ def get_financial_kpi(symbol, kpi):
 
     return None
 
-def render_test(database):
+def render_analyse_fond(database):
     st.title("Analyse fondamentale")
 
     col1, col2 = st.columns([3, 1])
