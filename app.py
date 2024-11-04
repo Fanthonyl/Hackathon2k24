@@ -5,14 +5,14 @@ st.set_page_config(page_title="AlexIA", page_icon="alexia2.png", layout="wide")
 
 # Configurer les pages pour la navigation
 pages = {
-    "Home": [st.Page("home.py", title="Home")],
+    "Acceuil": [st.Page("home.py", title="Acceuil")],
     "Outils d'Analyse": [
         st.Page("analyse_glob.py", title="Analyse économique (Canada)"),
         st.Page("analyse_fond.py", title="Analyse fondamentale"),
         st.Page("analyse_tech.py", title="Analyse technique"),
         st.Page("sentiment.py", title="Analyse de Sentiments")
     ],
-    "Board": [st.Page("board.py", title="Board")],
+    "Board": [st.Page("Gouvernance.py", title="Tableau de bord de gouvernance")],
     "Gestionnaire de portefeuille": [st.Page("pricer.py", title="Optimisation du portefeuille")]
 }
 

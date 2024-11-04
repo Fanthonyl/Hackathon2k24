@@ -103,7 +103,7 @@ def calculate_bollinger_bands(data, window=20):
     return rolling_mean, upper_band, lower_band
 
 
-st.title('Analyse Technique des Actions')
+st.title('Analyse Technique')
 st.markdown("Alexia vous aide à suivre les tendances des principaux KPIs techniques par secteur ou entreprise, pour une évaluation approfondie de la performance.")
 
 # Initialize session state if necessary

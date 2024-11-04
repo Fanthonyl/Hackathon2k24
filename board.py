@@ -173,7 +173,7 @@ def get_executive_info(ticker):
     
     return pd.DataFrame(data), board_risk
 
-st.title("Informations des dirigeants d'entreprise")
+st.title("Tableau de bord de gouvernance")
 st.markdown("""Explorez avec Alexia les caractéristiques du board afin de prévoir les futures décisions.""")
 
 entreprises = [item['nom'] for item in database]
