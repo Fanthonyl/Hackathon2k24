@@ -52,7 +52,7 @@ sectors_from_db = {domaine: [entry['ticker'] for entry in database if entry['dom
 
 # Navigation bar with fixed pages
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Select Page", ["Home", "Pricer", "Sentiment", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique", "Board"])
+page = st.sidebar.radio("", ["Home","Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique", "Sentiment", "Board", "Pricer"])
 
 # Passer les variables globales aux fonctions de rendu des pages
 if page == "Home":
@@ -81,4 +81,4 @@ elif page == "Board":
 
 elif page == "Pricer":
     from pricer import render_pricer
-    render_pricer()
+    render_pricer(database)
