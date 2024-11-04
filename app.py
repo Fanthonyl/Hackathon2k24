@@ -1,5 +1,7 @@
 import streamlit as st 
 
+# Configurer la page pour un affichage large
+st.set_page_config(page_title="Analyse des valeurs", page_icon="alexia2.png", layout="wide")
 
 # Configurer les pages pour la navigation
 pages = {
@@ -14,23 +16,19 @@ pages = {
     "Pricer": [st.Page("pricer.py", title="Pricer")]
 }
 
-
 pg = st.navigation(pages)
 
-# Configurer la page pour un affichage large
-st.set_page_config(page_title="Analyse des valeurs", page_icon= "alexia2.png", layout="wide")
-
-# Navigation bar with fixed pages
-#Logo dans la sidebar
+# Logo dans la sidebar
 st.sidebar.image('alexia.png', use_column_width=True)
-#le titre de la sidebar, centré
+
+# Le titre de la sidebar, centré
 st.sidebar.markdown(
     """
     <style>
     .sidebar-title {
         text-align: center;
         color: white;
-        font-size: 20px !important; /* Ensures the font size is applied */
+        font-size: 20px !important; /* Assure que la taille de la police est appliquée */
         margin: 0;
         padding: 0;
         width: 100%;
@@ -44,5 +42,5 @@ st.sidebar.markdown(
 st.sidebar.markdown("\n\n")
 st.sidebar.markdown("\n\n")
 
-
+# Lancer la navigation
 pg.run()
