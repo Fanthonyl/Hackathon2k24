@@ -11,6 +11,97 @@ from data import database
 
 comprehend = boto3.client('comprehend', region_name='us-west-2')
 
+
+def entreprise_vs_clients(nom):
+    # Définir les couleurs pour le thème violet
+    nom_original = nom
+    colors = ['#800080', '#9370DB']  # Couleurs pour les barres
+    nom = nom.replace(" ", "-").lower()
+    cursor_positions = []
+    labels = ["clients", nom]
+
+    for type in labels:
+        positive_tweets = 0
+        negative_tweets = 0
+        neutral_tweets = 0
+        mixed_tweets = 0
+
+        if type == nom:
+            URL = f"https://twstalker.com/{nom}"
+        else:
+            URL = f"https://twstalker.com/search/{nom}"
+
+        page = requests.get(URL)
+        soup = BeautifulSoup(page.content, "html.parser")
+        tweets = []
+        job_elements = soup.find_all("p")
+        nb_tweets = 30
+
+        for i, job_element in enumerate(job_elements[:nb_tweets]):
+            element = job_element.text
+            tweets.append(element)
+
+        tweets = tweets[1:]  # Supprimer le premier élément qui cause un bug
+
+        for tweet in tweets:
+            sentiment = classify_sentiment_comprehend(tweet)
+            if sentiment == 'POSITIVE':
+                positive_tweets += 1
+            elif sentiment == 'NEGATIVE':
+                negative_tweets += 1
+            elif sentiment == 'NEUTRAL':
+                neutral_tweets += 1
+            elif sentiment == 'MIXED':
+                mixed_tweets += 1
+
+        total_tweets = len(tweets)
+
+        if total_tweets > 0:
+            positive_ratio = positive_tweets / total_tweets
+            negative_ratio = negative_tweets / total_tweets
+            neutral_ratio = neutral_tweets / total_tweets
+            mixed_ratio = mixed_tweets / total_tweets
+
+            if positive_tweets+negative_tweets == 0:
+                cursor_position = 0.5
+            else:
+                if positive_ratio > negative_ratio:
+                    cursor_position = 0.5 + positive_ratio/2
+                else:
+                    cursor_position = 0.5 - negative_ratio/2
+            cursor_positions.append(cursor_position)
+            
+        else:
+            cursor_positions.append(0.5)  # Si aucun tweet, position neutre
+            st.write(f"Aucun tweet trouvé pour {type}.")
+
+    fig = go.Figure(data=[
+        go.Bar(
+            y=["Opinion publique", nom_original],
+            x=cursor_positions,
+            orientation='h',
+            marker_color=colors,
+            text=[f"{pos:.2f}%" for pos in cursor_positions],
+            textposition='auto',
+            width=0.2,
+        )
+    ])
+
+
+    fig.update_layout(
+        height=250,
+        title=f"Analyse en temps réel des taux de sentiments positifs pour {nom_original}, en fonction de leurs communiqués et de l'opinion publique",
+        xaxis_title=f"Taux de sentiments positifs pour {nom_original} selon des utilisateurs",
+        yaxis_title="",
+        template='plotly_dark',
+        xaxis=dict(
+            range=[0, 1]
+        )
+    )
+
+    st.session_state['fig_entreprise_vs_clients'] = fig  # Stocker dans l'état après la création
+    #st.plotly_chart(fig, key="entreprise_vs_clients")  # Afficher avec une clé unique
+
 # Extraire les secteurs et les entreprises correspondantes
 def get_sectors_from_db(database):
     return {domaine: [(entry['ticker'], entry['nom']) for entry in database if entry['domaine'] == domaine] for domaine in set(entry['domaine'] for entry in database)}
@@ -115,8 +206,6 @@ if 'fig_entreprise_vs_clients' not in st.session_state:
 
 st.title("Analyse de Sentiments")
 
-st.image("alexia.png", caption="Description de l'image")
-
 # Extraire les secteurs à partir de la base de données
 sectors_from_db = get_sectors_from_db(database)
 
@@ -183,93 +272,3 @@ if st.session_state['fig_multi_colormap'] is not None:
 
 
 
-
-def entreprise_vs_clients(nom):
-    # Définir les couleurs pour le thème violet
-    nom_original = nom
-    colors = ['#800080', '#9370DB']  # Couleurs pour les barres
-    nom = nom.replace(" ", "-").lower()
-    cursor_positions = []
-    labels = ["clients", nom]
-
-    for type in labels:
-        positive_tweets = 0
-        negative_tweets = 0
-        neutral_tweets = 0
-        mixed_tweets = 0
-
-        if type == nom:
-            URL = f"https://twstalker.com/{nom}"
-        else:
-            URL = f"https://twstalker.com/search/{nom}"
-
-        page = requests.get(URL)
-        soup = BeautifulSoup(page.content, "html.parser")
-        tweets = []
-        job_elements = soup.find_all("p")
-        nb_tweets = 30
-
-        for i, job_element in enumerate(job_elements[:nb_tweets]):
-            element = job_element.text
-            tweets.append(element)
-
-        tweets = tweets[1:]  # Supprimer le premier élément qui cause un bug
-
-        for tweet in tweets:
-            sentiment = classify_sentiment_comprehend(tweet)
-            if sentiment == 'POSITIVE':
-                positive_tweets += 1
-            elif sentiment == 'NEGATIVE':
-                negative_tweets += 1
-            elif sentiment == 'NEUTRAL':
-                neutral_tweets += 1
-            elif sentiment == 'MIXED':
-                mixed_tweets += 1
-
-        total_tweets = len(tweets)
-
-        if total_tweets > 0:
-            positive_ratio = positive_tweets / total_tweets
-            negative_ratio = negative_tweets / total_tweets
-            neutral_ratio = neutral_tweets / total_tweets
-            mixed_ratio = mixed_tweets / total_tweets
-
-            if positive_tweets+negative_tweets == 0:
-                cursor_position = 0.5
-            else:
-                if positive_ratio > negative_ratio:
-                    cursor_position = 0.5 + positive_ratio/2
-                else:
-                    cursor_position = 0.5 - negative_ratio/2
-            cursor_positions.append(cursor_position)
-            
-        else:
-            cursor_positions.append(0.5)  # Si aucun tweet, position neutre
-            st.write(f"Aucun tweet trouvé pour {type}.")
-
-    fig = go.Figure(data=[
-        go.Bar(
-            y=["Opinion publique", nom_original],
-            x=cursor_positions,
-            orientation='h',
-            marker_color=colors,
-            text=[f"{pos:.2f}%" for pos in cursor_positions],
-            textposition='auto',
-            width=0.2,
-        )
-    ])
-
-
-    fig.update_layout(
-        height=250,
-        title=f"Analyse en temps réel des taux de sentiments positifs pour {nom_original}, en fonction de leurs communiqués et de l'opinion publique",
-        xaxis_title=f"Taux de sentiments positifs pour {nom_original} selon des utilisateurs",
-        yaxis_title="",
-        template='plotly_dark',
-        xaxis=dict(
-            range=[0, 1]
-        )
-    )
-
-    st.session_state['fig_entreprise_vs_clients'] = fig  # Stocker dans l'état après la création
-    #st.plotly_chart(fig, key="entreprise_vs_clients")  # Afficher avec une clé unique
