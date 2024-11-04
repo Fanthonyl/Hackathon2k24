@@ -6,6 +6,11 @@ from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
 
+st.title("Analyse économique (Canada)")
+
+# Additional information or explanations
+st.markdown("""**Suivez avec Alexia les tendances des principaux indicateurs économiques pour une idée globale du marché canadien de 2014 à aujourd’hui.**""")
+
 
 # Function to load and filter data with optional annual variation calculation
 def load_indicator_data(table_id, filters, calculate_variation=False):
@@ -122,11 +127,6 @@ fig.update_layout(
     template="plotly_white",
     legend=dict(font=dict(size=15)),  
 )
-
-st.title("Analyse économique (Canada)")
-
-# Additional information or explanations
-st.markdown("""**Suivez avec Alexia les tendances des principaux indicateurs économiques pour une idée globale du marché canadien de 2014 à aujourd’hui.**""")
 
 # Display the combined plot
 st.plotly_chart(fig)
