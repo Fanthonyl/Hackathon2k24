@@ -11,6 +11,7 @@ from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
+from data import database
 
 
 # setting logger
@@ -172,62 +173,61 @@ def get_executive_info(ticker):
     
     return pd.DataFrame(data), board_risk
 
-def render_board(database):
-    st.title("Informations des dirigeants d'entreprise")
-    st.markdown("""Explorez avec Alexia les caractéristiques du board afin de prévoir les futures décisions.""")
+st.title("Informations des dirigeants d'entreprise")
+st.markdown("""Explorez avec Alexia les caractéristiques du board afin de prévoir les futures décisions.""")
 
-    entreprises = [item['nom'] for item in database]
-    entreprise_selectionnee = st.selectbox("Choisissez une entreprise", entreprises)
-    ticker = next((item['ticker'] for item in database if item['nom'] == entreprise_selectionnee), None)
+entreprises = [item['nom'] for item in database]
+entreprise_selectionnee = st.selectbox("Choisissez une entreprise", entreprises)
+ticker = next((item['ticker'] for item in database if item['nom'] == entreprise_selectionnee), None)
 
-    if ticker:
-        st.subheader(f"Tableau de bord des dirigeants de {ticker}")
-    
-        try:
-            df , board_risk = get_executive_info(ticker)
-            if not df.empty:
-                st.dataframe(df, use_container_width=True)
-                st.subheader("Risque du conseil d'administration")
-                # Affichage de la jauge de risque
-                if board_risk != 'Non disponible':
-                    fig = go.Figure(go.Indicator(
-                        mode="gauge+number",
-                        value=board_risk,
-                        title={'text': "Risque du Conseil d'Administration"},
-                        gauge={
-                            'axis': {'range': [1, 10]},
-                            'bar': {'color': 'red' if board_risk >= 7 else 'orange' if board_risk >= 4 else 'green'},
-                            'steps': [
-                                {'range': [1, 4], 'color': 'lightgreen'},
-                                {'range': [4, 7], 'color': 'yellow'},
-                                {'range': [7, 10], 'color': 'lightcoral'}    
-                                ],
-                            'threshold': {
-                                'line': {'color': "black", 'width': 4},
-                                'value': board_risk
-                            }
+if ticker:
+    st.subheader(f"Tableau de bord des dirigeants de {ticker}")
+
+    try:
+        df , board_risk = get_executive_info(ticker)
+        if not df.empty:
+            st.dataframe(df, use_container_width=True)
+            st.subheader("Risque du conseil d'administration")
+            # Affichage de la jauge de risque
+            if board_risk != 'Non disponible':
+                fig = go.Figure(go.Indicator(
+                    mode="gauge+number",
+                    value=board_risk,
+                    title={'text': "Risque du Conseil d'Administration"},
+                    gauge={
+                        'axis': {'range': [1, 10]},
+                        'bar': {'color': 'red' if board_risk >= 7 else 'orange' if board_risk >= 4 else 'green'},
+                        'steps': [
+                            {'range': [1, 4], 'color': 'lightgreen'},
+                            {'range': [4, 7], 'color': 'yellow'},
+                            {'range': [7, 10], 'color': 'lightcoral'}    
+                            ],
+                        'threshold': {
+                            'line': {'color': "black", 'width': 4},
+                            'value': board_risk
                         }
-                    ))
-                    st.plotly_chart(fig)
-                else:
-                    st.info("Le risque du conseil d'administration est : Non disponible")
+                    }
+                ))
+                st.plotly_chart(fig)
             else:
-                st.warning("Aucune information sur les dirigeants n'a été trouvée pour cette entreprise.")
-        except Exception as e:
-            st.error(f"Une erreur s'est produite : {e}")
-    else:
-        st.info("Veuillez entrer un symbole boursier pour afficher les informations des dirigeants.")
+                st.info("Le risque du conseil d'administration est : Non disponible")
+        else:
+            st.warning("Aucune information sur les dirigeants n'a été trouvée pour cette entreprise.")
+    except Exception as e:
+        st.error(f"Une erreur s'est produite : {e}")
+else:
+    st.info("Veuillez entrer un symbole boursier pour afficher les informations des dirigeants.")
 
-    # Get financial insights from AWS Bedrock
-    st.subheader("Insights sur le board")
-    with st.spinner("AlexIA réfléchit profondément..."):
-        try:
-            financial_insights = get_financial_insights(ticker)
-            st.write(financial_insights)
-        except Exception as e:
-            st.error("Erreur lors de l'obtention de l'analyse.")
-            logger.error(f"Erreur: {e}")
+# Get financial insights from AWS Bedrock
+st.subheader("Insights sur le board")
+with st.spinner("AlexIA réfléchit profondément..."):
+    try:
+        financial_insights = get_financial_insights(ticker)
+        st.write(financial_insights)
+    except Exception as e:
+        st.error("Erreur lors de l'obtention de l'analyse.")
+        logger.error(f"Erreur: {e}")
 
 
-    st.markdown("---")
-    st.caption("Les données sont fournies par Yahoo Finance et complétées par des recherches web.")
+st.markdown("---")
+st.caption("Les données sont fournies par Yahoo Finance et complétées par des recherches web.")

@@ -7,6 +7,7 @@ import boto3
 import plotly.graph_objects as go
 import numpy as np
 
+from data import database
 
 comprehend = boto3.client('comprehend', region_name='us-west-2')
 
@@ -104,79 +105,76 @@ def multi_colormap_semi(database, selected_company, other_companies):
 
 
 
-def render_sentiment(database):
+
+if 'fig_multi_colormap' not in st.session_state:
+    st.session_state['fig_multi_colormap'] = None
+
+if 'fig_entreprise_vs_clients' not in st.session_state:
+    st.session_state['fig_entreprise_vs_clients'] = None
 
 
+st.title("Analyse de Sentiments")
 
-    if 'fig_multi_colormap' not in st.session_state:
-        st.session_state['fig_multi_colormap'] = None
+st.image("alexia.png", caption="Description de l'image")
 
-    if 'fig_entreprise_vs_clients' not in st.session_state:
-        st.session_state['fig_entreprise_vs_clients'] = None
+# Extraire les secteurs à partir de la base de données
+sectors_from_db = get_sectors_from_db(database)
 
-
-    st.title("Analyse de Sentiments")
-    
-    st.image("alexia.png", caption="Description de l'image")
-    
-    # Extraire les secteurs à partir de la base de données
-    sectors_from_db = get_sectors_from_db(database)
-
-    st.write("Découvrez l'analyse détaillée des sentiments des utilisateurs envers les entreprises et les secteurs spécifiques. Identifiez les opinions positives, négatives, et neutres à travers des données collectées sur les réseaux sociaux.")
+st.write("Découvrez l'analyse détaillée des sentiments des utilisateurs envers les entreprises et les secteurs spécifiques. Identifiez les opinions positives, négatives, et neutres à travers des données collectées sur les réseaux sociaux.")
 
 
-    # Ajout de la sélection du secteur
-    st.subheader("Sélection d'une entreprise à analyser")
-    
-    selected_sector = st.selectbox(
-        "Sélectionnez un secteur industriel pour explorer les entreprises qui y sont associées :",
-        list(sectors_from_db.keys())
-    )
-    
-    # Formater les entreprises comme "Nom (Ticker)"
-    formatted_companies = [f"{nom} ({ticker})" for ticker, nom in sectors_from_db[selected_sector]]
+# Ajout de la sélection du secteur
+st.subheader("Sélection d'une entreprise à analyser")
 
-    # Ajout de la sélection d'une entreprise spécifique
-    selected_company = st.selectbox(
-        "Sélectionnez l'entreprise que vous souhaitez analyser et comparer au reste du marché :",
-        formatted_companies
-    )
+selected_sector = st.selectbox(
+    "Sélectionnez un secteur industriel pour explorer les entreprises qui y sont associées :",
+    list(sectors_from_db.keys())
+)
 
-    # Ajout du bouton pour exécuter l'analyse de l'entreprise vs clients
-    if st.button("Exécuter l'analyse Entreprise vs Clients"):
-        entreprise_vs_clients(selected_company.split(' (')[0])
-    
-    # Afficher la figure existante `entreprise_vs_clients` si elle est déjà générée
-    if st.session_state['fig_entreprise_vs_clients'] is not None:
-        st.plotly_chart(st.session_state['fig_entreprise_vs_clients'], key="entreprise_vs_clients_reloaded")
+# Formater les entreprises comme "Nom (Ticker)"
+formatted_companies = [f"{nom} ({ticker})" for ticker, nom in sectors_from_db[selected_sector]]
 
-    # Ajout de la case à cocher pour sélectionner/désélectionner toutes les entreprises
-    st.subheader("Analyse comparative avec les autres entreprises du marché")
-    
-    st.write("Sélectionnez les entreprises que vous souhaitez inclure dans l'analyse comparative des sentiments. Cette option permet de visualiser les opinions sur plusieurs entreprises afin de voir comment elles se comparent entre elles.")
-    
-    select_all = st.checkbox("Tout sélectionner / Tout désélectionner", value=False)
+# Ajout de la sélection d'une entreprise spécifique
+selected_company = st.selectbox(
+    "Sélectionnez l'entreprise que vous souhaitez analyser et comparer au reste du marché :",
+    formatted_companies
+)
 
-    checkboxes = {}
-    for company in formatted_companies:
-        if company != selected_company:
-            checkboxes[company] = st.checkbox(company, value=select_all)
+# Ajout du bouton pour exécuter l'analyse de l'entreprise vs clients
+if st.button("Exécuter l'analyse Entreprise vs Clients"):
+    entreprise_vs_clients(selected_company.split(' (')[0])
 
-    # Mettre à jour la liste des autres entreprises sélectionnées
-    other_companies = [company.split(' (')[0] for company, checked in checkboxes.items() if checked]
+# Afficher la figure existante `entreprise_vs_clients` si elle est déjà générée
+if st.session_state['fig_entreprise_vs_clients'] is not None:
+    st.plotly_chart(st.session_state['fig_entreprise_vs_clients'], key="entreprise_vs_clients_reloaded")
 
-    if st.button("Lancer l'analyse"):
-        try:
-            company_name = selected_company.split(' (')[0]
-            multi_colormap_semi(database, company_name, other_companies)
+# Ajout de la case à cocher pour sélectionner/désélectionner toutes les entreprises
+st.subheader("Analyse comparative avec les autres entreprises du marché")
 
-        except Exception as e:
-            st.error(f"Une erreur est survenue lors de l'analyse: {str(e)}")
+st.write("Sélectionnez les entreprises que vous souhaitez inclure dans l'analyse comparative des sentiments. Cette option permet de visualiser les opinions sur plusieurs entreprises afin de voir comment elles se comparent entre elles.")
 
-    
-    # Afficher la figure existante `multi_colormap_semi` si elle est déjà générée
-    if st.session_state['fig_multi_colormap'] is not None:
-        st.plotly_chart(st.session_state['fig_multi_colormap'], key="multi_colormap_reloaded")
+select_all = st.checkbox("Tout sélectionner / Tout désélectionner", value=False)
+
+checkboxes = {}
+for company in formatted_companies:
+    if company != selected_company:
+        checkboxes[company] = st.checkbox(company, value=select_all)
+
+# Mettre à jour la liste des autres entreprises sélectionnées
+other_companies = [company.split(' (')[0] for company, checked in checkboxes.items() if checked]
+
+if st.button("Lancer l'analyse"):
+    try:
+        company_name = selected_company.split(' (')[0]
+        multi_colormap_semi(database, company_name, other_companies)
+
+    except Exception as e:
+        st.error(f"Une erreur est survenue lors de l'analyse: {str(e)}")
+
+
+# Afficher la figure existante `multi_colormap_semi` si elle est déjà générée
+if st.session_state['fig_multi_colormap'] is not None:
+    st.plotly_chart(st.session_state['fig_multi_colormap'], key="multi_colormap_reloaded")
 
 
 
