@@ -169,31 +169,18 @@ def render_analyse_glob():
     prompt = f"Analyser les variations des indicateurs financiers pour le Canada de 2014 à aujourd'hui."
     prompt += f"\n\n{summary_df.to_markdown()}"
 
-    # Initialize session state for the summary
-    if 'summary_generated' not in st.session_state:
-        st.session_state.summary_generated = False
-        st.session_state.summary_text = ""
-
     # Button to display detailed table
     if st.button("Afficher la table de données"):
         st.subheader("Tableau des indicateurs financiers")
         st.dataframe(summary_df)
 
-    # Check if the summary has already been generated
-    if not st.session_state.summary_generated:
-        with st.spinner("AlexIA réfléchit profondément..."):
-            try:
-                summary_text = bedrock_wrapper.invoke_agent(agent_id, agent_alias_id, session_id, prompt)
-                st.session_state.summary_text = summary_text
-                st.session_state.summary_generated = True
-                st.subheader("Résumé des variations des indicateurs")
-                st.markdown(st.session_state.summary_text)
-            except Exception as e:
-                st.error("Erreur lors de l'obtention de l'analyse.")
-                logger.error(f"Erreur: {e}")
-    else:
-        st.subheader("Résumé des variations des indicateurs")
-        st.markdown(st.session_state.summary_text)
-
+    with st.spinner("AlexIA réfléchit profondément..."):
+        try:
+            summary_text = bedrock_wrapper.invoke_agent(agent_id, agent_alias_id, session_id, prompt)
+            st.subheader("Résumé des variations des indicateurs")
+            st.markdown(summary_text)
+        except Exception as e:
+            st.error("Erreur lors de l'obtention de l'analyse.")
+            logger.error(f"Erreur: {e}")
 
 

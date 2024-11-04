@@ -225,5 +225,10 @@ def render_analyse_fond(database):
     
     # Get financial insights from AWS Bedrock
     st.subheader("Insights Financiers")
-    financial_insights = get_financial_insights(ticker_selectionne, kpi_selectionne, mediane_secteur, df_medianes_secteurs)
-    st.write(financial_insights)
+    with st.spinner("AlexIA réfléchit profondément..."):
+        try:
+            financial_insights = get_financial_insights(ticker_selectionne, kpi_selectionne, mediane_secteur, df_medianes_secteurs)
+            st.write(financial_insights)
+        except Exception as e:
+            st.error("Erreur lors de l'obtention de l'analyse.")
+            logger.error(f"Erreur: {e}")
