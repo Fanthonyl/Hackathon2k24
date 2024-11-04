@@ -77,5 +77,9 @@ The pricer tool helps in pricing financial instruments based on various paramete
 ### License
 This project is licensed under the MIT License. See the LICENSE file for details.
 
+### Credentials
+
+In App/user create an .aws folder create a file "credentials" with the valid credentials.
+
 
 This [README.md](http://_vscodecontentref_/2) provides a detailed overview of the application, its installation, usage, and the functionalities of each page.
