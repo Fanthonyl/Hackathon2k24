@@ -3,7 +3,73 @@ import numpy as np
 import yfinance as yf
 import plotly.graph_objects as go
 import streamlit as st
+import boto3
+import json
+import logging
+from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
+import uuid
+
+# Setting up logging
+logging.basicConfig(format='[%(asctime)s] p%(process)s {%(filename)s:%(lineno)d} %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class BedrockAgentRuntimeWrapper:
+    """Encapsulates Amazon Bedrock Agents Runtime actions."""
+
+    def __init__(self, runtime_client):
+        self.agents_runtime_client = runtime_client
+
+    def invoke_agent(self, agent_id, agent_alias_id, session_id, prompt):
+        """
+        Sends a prompt for the agent to process and respond to.
+        """
+        try:
+            response = self.agents_runtime_client.invoke_agent(
+                agentId=agent_id,
+                agentAliasId=agent_alias_id,
+                sessionId=session_id,
+                inputText=prompt,
+            )
+
+            completion = ""
+            for event in response.get("completion"):
+                chunk = event["chunk"]
+                completion += chunk["bytes"].decode() + "\n"
+
+            return completion
+
+        except ClientError as e:
+            logger.error(f"Couldn't invoke agent. {e}")
+            raise
+
+# Initialize Bedrock clients and the wrapper
+bedrock_client = boto3.client('bedrock', region_name='us-west-2')
+bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime', region_name='us-west-2')
+bedrock_wrapper = BedrockAgentRuntimeWrapper(bedrock_agent_runtime_client)
+
+def get_financial_insights(tickers_list):
+    session_id = str(uuid.uuid1())
+    agent_id = 'ACVSW7ULXC'
+    agent_alias_id = 'FGVZUPEISZ'
+    
+    # Prepare the prompt for Bedrock input
+    input_text = (
+        f"Analyze the following json: {json.dumps(tickers_list)}.\n"
+        f"As you can see it contains the variations of financial indicators.\n"
+        f"Please provide insights those.\n"
+        f"Speak in French\n"
+    )
+
+    # Invoke the agent via the BedrockAgentRuntimeWrapper
+    logger.info(f"Invoking agent with prompt:\n{input_text}")
+    insights = bedrock_wrapper.invoke_agent(agent_id, agent_alias_id, session_id, input_text)
+
+    # Log the response for debugging
+    logger.info("Financial insights received:")
+    logger.info(insights)
+    
+    return insights or 'No insights available.'
 
 def calculate_rsi(data, window=14):
     delta = data['Close'].diff()
@@ -32,7 +98,9 @@ def calculate_bollinger_bands(data, window=20):
     return rolling_mean, upper_band, lower_band
 
 def render_analyse_tech(sectors_from_db):
+
     st.title('Analyse Technique des Actions')
+    st.markdown("Alexia vous aide à suivre les tendances des principaux KPIs techniques par secteur ou entreprise, pour une évaluation approfondie de la performance.")
 
     # Initialize session state if necessary
     if 'secteur' not in st.session_state:
@@ -74,6 +142,8 @@ def render_analyse_tech(sectors_from_db):
 
     chart_type = st.selectbox('Sélectionnez le type de graphique à afficher :', ['RSI', 'MACD', 'OBV'])
 
+    kpi_values = []
+
     for i, ticker in enumerate(tickers):
         data = yf.download(ticker, start=start_date, end=end_date)
 
@@ -108,5 +178,27 @@ def render_analyse_tech(sectors_from_db):
                 with col2:
                     st.plotly_chart(fig, use_container_width=True)
 
+            # Collect KPI values for the agent
+            kpi_values.append({
+                "ticker": ticker,
+                "RSI": data['RSI'].iloc[-1],
+                "MACD": data['MACD'].iloc[-1],
+                "OBV": data['OBV'].iloc[-1],
+                # Add more KPIs if needed
+            })
+
         else:
             st.error(f'Aucune donnée trouvée pour {ticker}.')
+
+    # Add Analyser button
+    if st.button("Analyser"):
+        try:
+            # Prepare the prompt
+            insights = get_financial_insights(kpi_values)
+            st.subheader("Insights sur les actions sélectionnées :")
+            st.markdown(insights)
+        except Exception as e:
+            st.error(f"Erreur lors de l'analyse : {str(e)}")
+    else:
+        st.warning("Aucune analyse possible.")
+

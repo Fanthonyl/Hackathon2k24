@@ -5,6 +5,43 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
+import boto3
+import uuid
+import logging
+from botocore.exceptions import ClientError
+
+# Initialize Bedrock client and agent wrapper
+logging.basicConfig(format='[%(asctime)s] %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+class BedrockAgentRuntimeWrapper:
+    """Encapsulates Amazon Bedrock Agents Runtime actions."""
+
+    def __init__(self, runtime_client):
+        self.agents_runtime_client = runtime_client
+
+    def invoke_agent(self, agent_id, agent_alias_id, session_id, prompt):
+        try:
+            response = self.agents_runtime_client.invoke_agent(
+                agentId=agent_id,
+                agentAliasId=agent_alias_id,
+                sessionId=session_id,
+                inputText=prompt,
+            )
+            completion = ""
+            for event in response.get("completion"):
+                chunk = event["chunk"]
+                completion += chunk["bytes"].decode() + "\n"
+            return completion
+        except ClientError as e:
+            logger.error(f"Couldn't invoke agent. {e}")
+            raise
+
+# Bedrock client and wrapper instance
+bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime', region_name='us-west-2')
+bedrock_wrapper = BedrockAgentRuntimeWrapper(bedrock_agent_runtime_client)
+agent_id = 'ACVSW7ULXC'
+agent_alias_id = 'FGVZUPEISZ'
 
 def render_analyse_glob():
     # Function to load and filter data with optional annual variation calculation
@@ -20,13 +57,13 @@ def render_analyse_glob():
         df['VALUE'] = pd.to_numeric(df['VALUE'], errors='coerce')
 
         if calculate_variation:
-            df_annual = df['VALUE'].resample('Y').mean()
+            df_annual = df['VALUE'].resample('YE').mean()
             df_annual_change = df_annual.pct_change() * 100
             df_annual_change = df_annual_change.reset_index()
             df_annual_change.columns = ['Year', 'Annual Variation (%)']
             return df_annual_change
         else:
-            df_resampled = df.resample('Y')['VALUE'].mean().reset_index()
+            df_resampled = df.resample('YE')['VALUE'].mean().reset_index()
             df_resampled.columns = ['Year', 'VALUE']
             return df_resampled[['Year', 'VALUE']]
 
@@ -78,7 +115,6 @@ def render_analyse_glob():
     summary_df['Year'] = summary_df['Year'].dt.year.astype(str).str.strip()
     summary_df.set_index('Year', inplace=True)
 
-
     # Sort DataFrame by Year in descending order
     summary_df.sort_index(ascending=False, inplace=True)
 
@@ -120,21 +156,44 @@ def render_analyse_glob():
         template="plotly_white"
     )
 
-    st.title("Analyse des valeurs moyennes des actions par secteur au Canada")
+    st.title("Analyse sectorielle des actions au Canada")
+    st.markdown("""
+    Visualisez avec Alexia les principaux indicateurs financiers pour le Canada de 2014 à aujourd’hui, en termes de variations annuelles.
+    """)
+    
     # Display the combined plot
     st.plotly_chart(fig)
+
+    # Generate and display summary using AWS agent
+    session_id = str(uuid.uuid1())
+    prompt = f"Analyser les variations des indicateurs financiers pour le Canada de 2014 à aujourd'hui."
+    prompt += f"\n\n{summary_df.to_markdown()}"
+
+    # Initialize session state for the summary
+    if 'summary_generated' not in st.session_state:
+        st.session_state.summary_generated = False
+        st.session_state.summary_text = ""
 
     # Button to display detailed table
     if st.button("Afficher la table de données"):
         st.subheader("Tableau des indicateurs financiers")
         st.dataframe(summary_df)
 
-    # Additional information or explanations
-    st.markdown("""
-    Ce tableau de bord présente les principaux indicateurs financiers pour le Canada de 2014 à aujourd’hui, avec des filtres sélectionnés.
-    Les variations annuelles des dépenses de consommation, du taux d’intérêt et de l’inflation donnent une idée des changements d’une année à l’autre. 
-    tandis que le graphique du PIB présente des valeurs absolues.
+    # Check if the summary has already been generated
+    if not st.session_state.summary_generated:
+        with st.spinner("AlexIA réfléchit profondément..."):
+            try:
+                summary_text = bedrock_wrapper.invoke_agent(agent_id, agent_alias_id, session_id, prompt)
+                st.session_state.summary_text = summary_text
+                st.session_state.summary_generated = True
+                st.subheader("Résumé des variations des indicateurs")
+                st.markdown(st.session_state.summary_text)
+            except Exception as e:
+                st.error("Erreur lors de l'obtention de l'analyse.")
+                logger.error(f"Erreur: {e}")
+    else:
+        st.subheader("Résumé des variations des indicateurs")
+        st.markdown(st.session_state.summary_text)
 
-    """)
 
-    st.subheader("Board")
+
