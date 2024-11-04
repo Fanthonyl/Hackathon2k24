@@ -60,9 +60,9 @@ if page == "Home":
     from home import render_home
     render_home(database)
 
-elif page == "Sentiment":
+elif page == "Analyse de Sentiments":
     from sentiment import render_sentiment
-    render_sentiment()
+    render_sentiment(database)
     
 elif page == "Analyse financière globale au Canada":
     from analyse_glob import render_analyse_glob
