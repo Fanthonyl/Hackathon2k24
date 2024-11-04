@@ -51,68 +51,22 @@ bedrock_client = boto3.client('bedrock', region_name='us-west-2')
 bedrock_agent_runtime_client = boto3.client('bedrock-agent-runtime', region_name='us-west-2')
 bedrock_wrapper = BedrockAgentRuntimeWrapper(bedrock_agent_runtime_client)
 
-def get_financial_insights(tickers):
+def get_financial_insights(ticker, kpi, median_sector_value, median_other_sectors):
     session_id = str(uuid.uuid1())
     agent_id = 'ACVSW7ULXC'
     agent_alias_id = 'FGVZUPEISZ'
     
-    # Prepare company data from yfinance
-    company_data = []
-    for ticker in tickers:
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        
-        company_details = {
-            "ticker": ticker,
-            "industry": info.get("industry"),
-            "business_summary": info.get("longBusinessSummary"),
-            "full_time_employees": info.get("fullTimeEmployees"),
-            "company_officers": [
-                {
-                    "name": officer.get("name"),
-                    "age": officer.get("age"),
-                    "title": officer.get("title"),
-                    "total_pay": officer.get("totalPay")
-                }
-                for officer in info.get("companyOfficers", []) if officer
-            ],
-            "audit_risk": info.get("auditRisk"),
-            "board_risk": info.get("boardRisk"),
-            "compensation_risk": info.get("compensationRisk"),
-            "shareholder_rights_risk": info.get("shareHolderRightsRisk"),
-            "overall_risk": info.get("overallRisk"),
-            "held_percent_insiders": info.get("heldPercentInsiders"),
-            "held_percent_institutions": info.get("heldPercentInstitutions"),
-        }
-        company_data.append(company_details)
-    
-    # Create prompt for Bedrock input
-    input_text = "Provide summary of the following information. Be brief and concise. I want you to also analyse the gender equity, salaries and age of the board. Work with bullet points and line breaks. \n"
-    for data in company_data:
-        input_text += (
-            f"\nCompany: {data['ticker']}\n"
-            f"- Industry: {data['industry']}\n"
-            f"- Business Summary: {data['business_summary']}\n"
-            f"- Full-Time Employees: {data['full_time_employees']}\n"
-            "- Key Officers:\n"
-        )
-        for officer in data["company_officers"]:
-            input_text += (
-                f"  - Name: {officer['name']}, Age: {officer['age']}, Title: {officer['title']}, "
-                f"Total Pay: {officer['total_pay']}\n"
-            )
-        input_text += (
-            f"- Audit Risk: {data['audit_risk']}\n"
-            f"- Board Risk: {data['board_risk']}\n"
-            f"- Compensation Risk: {data['compensation_risk']}\n"
-            f"- Shareholder Rights Risk: {data['shareholder_rights_risk']}\n"
-            f"- Overall Risk: {data['overall_risk']}\n"
-            f"- Held by Insiders: {data['held_percent_insiders']}\n"
-            f"- Held by Institutions: {data['held_percent_institutions']}\n"
-        )
-    
-    if len(tickers) > 1:
-        input_text += "\nConclude with an overall comparison of the companies listed."
+    # Prepare the prompt for Bedrock input
+    input_text = (
+        f"Analyze the financial performance of {ticker} based on the KPI: {kpi}.\n"
+        f"And if you can based on your knowledge base.\n"
+        f"Current value for {ticker} is {get_financial_kpi(ticker, kpi):.3f}.\n"
+        f"The median KPI value in its sector is {median_sector_value:.3f}.\n"
+        f"The median KPI values in other sectors are as follows: {median_other_sectors}.\n"
+        f"Please provide a concise analysis highlighting the strengths and weaknesses of {ticker} "
+        f"compared to the sector median and across different sectors."
+        f"Write in French."
+    )
 
     # Invoke the agent via the BedrockAgentRuntimeWrapper
     logger.info(f"Invoking agent with prompt:\n{input_text}")
@@ -171,6 +125,7 @@ def get_financial_kpi(symbol, kpi):
 
 def render_analyse_fond(database):
     st.title("Analyse fondamentale")
+    st.markdown("""Suivez les tendances des principaux KPIs financiers d'une entreprise, et comparer la à ses concurrents et aux autres secteurs pour une évaluation approfondie de la performance avec Alexia.""")
 
     col1, col2 = st.columns([3, 1])
 
@@ -223,12 +178,24 @@ def render_analyse_fond(database):
         with col2:
             st.subheader("")
             resultat = get_financial_kpi(ticker_selectionne, kpi_selectionne)
-            st.markdown(f"<div style='text-align: center;'><h3>{ticker_selectionne}</h3></div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='text-align: center;'><h2>{resultat}</h2></div>", unsafe_allow_html=True)
+            st.markdown(
+                f"<div style='text-align: center;'><br><br><h3 style='margin: 0;'>{ticker_selectionne}</h3></div>", 
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                f"<div style='text-align: center;'><h2 style='margin: 0; line-height: 1;'>{resultat}</h2><br><br></div>", 
+                unsafe_allow_html=True
+            )
 
-            moyenne_secteur = df_kpi_original['Valeur KPI'].mean()
-            st.markdown(f"<div style='text-align: center;'><h3>{domaine_selectionne}</h3></div>", unsafe_allow_html=True)
-            st.markdown(f"<div style='text-align: center;'><h2>{moyenne_secteur:.3f}</h2></div>", unsafe_allow_html=True)
+            mediane_secteur = df_kpi_original['Valeur KPI'].median()
+            st.markdown(
+                f"<div style='text-align: center;'><h3 style='margin: 0;'>{domaine_selectionne} (médiane)</h3></div>", 
+                unsafe_allow_html=True
+            )
+            st.markdown(
+                f"<div style='text-align: center;'><h2 style='margin: 0; line-height: 1;'>{mediane_secteur:.3f}</h2></div>", 
+                unsafe_allow_html=True
+            )
 
 
         if not df_kpi.empty:
@@ -237,7 +204,7 @@ def render_analyse_fond(database):
             st.write("Aucune donnée à afficher pour les entreprises dans le même secteur.")
 
         secteurs_distincts = set(item['domaine'] for item in database if item['domaine'] != domaine_selectionne)
-        moyennes_par_secteur = []
+        medianes_par_secteur = []
         for secteur in secteurs_distincts:
             entreprises_autre_secteur = [item for item in database if item['domaine'] == secteur]
             data_kpi_secteur = []
@@ -248,16 +215,21 @@ def render_analyse_fond(database):
                     data_kpi_secteur.append(kpi_valeur)
             
             if len(data_kpi_secteur) > 0:
-                moyenne_secteur = np.mean(data_kpi_secteur)
-                moyennes_par_secteur.append({'Secteur': secteur, 'Valeur moyenne du KPI': moyenne_secteur})
+                mediane_secteur = np.median(data_kpi_secteur, axis=0)
+                medianes_par_secteur.append({'Secteur': secteur, 'Valeur mediane du KPI': mediane_secteur})
         
-        df_moyennes_secteurs = pd.DataFrame(moyennes_par_secteur)
-        if not df_moyennes_secteurs.empty:
-            display_kpis_inline(df_moyennes_secteurs, f"{kpi_selectionne} pour les autres secteurs")
+        df_medianes_secteurs = pd.DataFrame(medianes_par_secteur)
+        if not df_medianes_secteurs.empty:
+            display_kpis_inline(df_medianes_secteurs, f"{kpi_selectionne} médian pour les autres secteurs")
         else:
             st.write("Aucune donnée à afficher pour les autres secteurs.")
     
     # Get financial insights from AWS Bedrock
     st.subheader("Insights Financiers")
-    financial_insights = get_financial_insights(ticker_selectionne)
-    st.write(financial_insights)
+    with st.spinner("AlexIA réfléchit profondément..."):
+        try:
+            financial_insights = get_financial_insights(ticker_selectionne, kpi_selectionne, mediane_secteur, df_medianes_secteurs)
+            st.write(financial_insights)
+        except Exception as e:
+            st.error("Erreur lors de l'obtention de l'analyse.")
+            logger.error(f"Erreur: {e}")

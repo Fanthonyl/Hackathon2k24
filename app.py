@@ -1,7 +1,7 @@
 import streamlit as st 
 
 # Configurer la page pour un affichage large
-st.set_page_config(page_title="Analyse des valeurs", layout="wide")
+st.set_page_config(page_title="Analyse des valeurs", page_icon= "alexia2.png", layout="wide")
 
 database = [
     # Agroalimentaire
@@ -98,7 +98,7 @@ elif page == "Analyse technique":
 
 elif page == "Board":
     from board import render_board
-    render_board()
+    render_board(database)
 
 elif page == "Pricer":
     from pricer import render_pricer
