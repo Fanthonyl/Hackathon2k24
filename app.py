@@ -7,7 +7,7 @@ st.set_page_config(page_title="AlexIA", page_icon="alexia2.png", layout="wide")
 pages = {
     "Home": [st.Page("home.py", title="Home")],
     "Outils d'Analyse": [
-        st.Page("analyse_glob.py", title="Analyse financière globale (Canada)"),
+        st.Page("analyse_glob.py", title="Analyse économique (Canada)"),
         st.Page("analyse_fond.py", title="Analyse fondamentale"),
         st.Page("analyse_tech.py", title="Analyse technique"),
         st.Page("sentiment.py", title="Analyse de Sentiments")
