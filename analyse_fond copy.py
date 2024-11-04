@@ -185,5 +185,5 @@ def render_analyse_fond(tickers, period):
 
     # Get financial insights from AWS Bedrock
     st.subheader("Insights Financiers")
-    financial_insights = get_financial_insights(tickers)
+    financial_insights = get_financial_insights(ticke)
     st.write(financial_insights)
