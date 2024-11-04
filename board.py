@@ -186,7 +186,7 @@ if ticker:
     try:
         df , board_risk = get_executive_info(ticker)
         if not df.empty:
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df.set_index( ['Nom']), use_container_width=True)
             st.subheader("Risque du conseil d'administration")
             # Affichage de la jauge de risque
             if board_risk != 'Non disponible':
