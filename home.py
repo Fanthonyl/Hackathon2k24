@@ -201,6 +201,6 @@ with st.spinner("AlexIA rédige une analyse des tendance obtenues ci-dessus...")
         insights = bedrock_wrapper.invoke_agent(agent_id, agent_alias_id, session_id, prompt)
         st.write(insights)
     except Exception as e:
-        st.error("Erreur lors de l'obtention des insights financiers.")
+        st.error("Erreur lors de l'obtention des insights financiers. Veuillez rentrer des credentials valides. Cela est vrai pour tout le reste de l'application.")
         logger.error(f"Erreur: {e}")
 
