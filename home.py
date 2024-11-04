@@ -67,7 +67,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.subheader("Analyse des valeurs moyennes des actions par secteur au Canada")
+st.subheader("Analyse en temps réel des valeurs moyennes des actions par secteur au Canada")
 
 col1, col2 = st.columns([10, 1])
 with col2:
@@ -112,7 +112,7 @@ with col1:
             df_plot.reset_index(inplace=True)
             df_plot.rename(columns={"index": "Date"}, inplace=True)
 
-            colors = [f'rgba(128, 0, {255 - i * 20}, 0.8)' for i in range(len(df_plot.columns) - 1)]
+            colors = [f'rgba(128, 0, {255 - i * 50}, 0.8)' for i in range(len(df_plot.columns) - 1)]
 
             fig = make_subplots(specs=[[{"secondary_y": True}]])
             indice = 0
@@ -180,7 +180,7 @@ for col, series in downsampled_data:
     prompt += f"Secteur: {col}\n{trend_data}\n\n"
 
 session_id = str(uuid.uuid1())
-st.subheader("Insights financiers")
+st.subheader("Analyse des tendances de performance boursière pour chaque secteurs")
 
 # Show a spinner while waiting for the insights
 with st.spinner("AlexIA rédige une analyse des tendance obtenues ci-dessus..."):
