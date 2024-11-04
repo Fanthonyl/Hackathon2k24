@@ -145,7 +145,7 @@ with col2:
         "Groupe 4": ['trailingEps']
     }
     tous_les_kpis = [kpi for kpis in groupes.values() for kpi in kpis]
-    kpi_selectionne = st.selectbox("Sélectionnez un Indicateurs financiers", options=tous_les_kpis)
+    kpi_selectionne = st.selectbox("Sélectionnez un indicateur financier", options=tous_les_kpis)
 
 entreprises_meme_secteur = [item for item in database if item['domaine'] == domaine_selectionne]
 
