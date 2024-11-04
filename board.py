@@ -12,10 +12,7 @@ def get_board_risk(ticker):
     board_risk = stock.info.get('boardRisk', 'Non disponible')
     return board_risk
 
-def get_board_risk(ticker):
-    stock = yf.Ticker(ticker)
-    board_risk = stock.info.get('boardRisk', 'Non disponible')
-    return board_risk
+
 
 def get_age_from_web(name, company):
     search_query = f"{name} {company} age"
@@ -47,8 +44,8 @@ def get_executive_info(ticker):
         age = exec.get('age', '')
         title = exec.get('title', '')
         
-        # Récupération des revenus
-        compensation = exec.get('totalAnnualCompensation', 'Non disponible')
+        # Récupération des revenus (modifié ici)
+        compensation = exec.get('totalPay', 'Non disponible')
 
         if not age:
             age = get_age_from_web(name, company_name)
@@ -57,7 +54,7 @@ def get_executive_info(ticker):
             'Nom': name,
             'Âge': age,
             'Position': title,
-            'Compensation Annuelle': compensation
+            'Paye annuelle': compensation
         })
     
     return pd.DataFrame(data), board_risk
