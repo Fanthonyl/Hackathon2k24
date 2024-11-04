@@ -21,19 +21,19 @@ def display_kpis_inline(df, label):
 
 
 # Streamlit app
-st.title("Optimisateur de Portefeuille")
+st.title("Optimisation du Portefeuille")
 
-col1, col2 = st.columns([1, 1])
+col1, col2, col3 = st.columns([1, 1, 5])
 with col1:
     # Input: portefeuille initial
-    budget = st.number_input("Entrez votre budget total (en CAD):", min_value=0.0, step=100.0)
+    budget = st.number_input("Entrez budget total (CAD):", min_value=100, step=100)
 with col2:
     # Sélection du profil d'investisseur
-    risk_profile = st.selectbox("Choisissez votre profil d'investisseur:", ["Risque", "Prudent", "Optimal"])
-
-# Input: choix des entreprises
-options = [stock['nom'] for stock in database]
-selected_stocks = st.multiselect("Choisissez les entreprises dans lesquelles investir:", options)
+    risk_profile = st.selectbox("Profil d'investisseur:", ["Risque", "Prudent", "Optimal"])
+with col3:
+    # Input: choix des entreprises
+    options = [stock['nom'] for stock in database]
+    selected_stocks = st.multiselect("Choisissez les entreprises dans lesquelles investir:", options)
 
 if budget > 0 and selected_stocks:
     # Filtrer les tickers sélectionnés
@@ -99,9 +99,6 @@ if budget > 0 and selected_stocks:
         st.subheader("Comparaison de la valeur du portefeuille")
         st.metric("Valeur du portefeuille après 1 an", f"{portfolio_value_after:.2f} CAD", f"{portfolio_value_after - portfolio_value_initial:.2f} CAD")
         
-
-
-    
     with col3:
         # Afficher la répartition optimale sous forme de camembert
         df_weights = pd.DataFrame({
@@ -109,7 +106,7 @@ if budget > 0 and selected_stocks:
             'Allocation (%)': optimal_weights * 100
         })
         st.subheader("Répartition optimale")
-        fig = px.pie(df_weights, names='Stock', values='Allocation (%)', height=400)
+        fig = px.pie(df_weights, names='Stock', values='Allocation (%)', height=300)
         st.plotly_chart(fig)
     
     # Calcul du rendement et de la volatilité du dernier mois pour chaque action

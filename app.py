@@ -13,7 +13,7 @@ pages = {
         st.Page("sentiment.py", title="Analyse de Sentiments")
     ],
     "Board": [st.Page("board.py", title="Board")],
-    "Pricer": [st.Page("pricer.py", title="Pricer")]
+    "Gestionnaire de portefeuille": [st.Page("pricer.py", title="Optimisation du portefeuille")]
 }
 
 pg = st.navigation(pages)
