@@ -73,7 +73,7 @@ st.sidebar.markdown(
 
 st.sidebar.markdown("\n\n")
 st.sidebar.markdown("\n\n")
-page = st.sidebar.radio("Select Page", ["Home", "Analyse financière globale", "Analyse fondamentale", "Analyse technique", "Sentiment", "Board", "Pricer"])
+page = st.sidebar.radio("Select Page", ["Home", "Analyse financière globale", "Analyse fondamentale", "Analyse technique", "Analyse de Sentiments", "Board", "Pricer"])
 
 # Passer les variables globales aux fonctions de rendu des pages
 if page == "Home":
@@ -84,7 +84,7 @@ elif page == "Analyse de Sentiments":
     from sentiment import render_sentiment
     render_sentiment(database)
     
-elif page == "Analyse financière globale au Canada":
+elif page == "Analyse financière globale":
     from analyse_glob import render_analyse_glob
     render_analyse_glob()
 
