@@ -6,22 +6,32 @@ from plotly.subplots import make_subplots
 from datetime import datetime
 
 def render_home(database):
+
+    # Affichage avec Streamlit
+    st.title("Analyse des valeurs moyennes des actions par secteur au Canada")
+
+    # Sélection de la période par l'utilisateur
+    time_span = st.selectbox(
+        "Sélectionnez la période pour l'analyse:",
+        ["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
+        index=3  # Définit la période par défaut à "1y"
+    )
+
     # Récupération des données
     #@st.cache_data
     def get_data():
         data = {}
-        end_date = datetime.today()
-        start_date = end_date.replace(year=end_date.year - 1)
 
         for action in database:
             try:
-                df = yf.download(action['ticker'], start=start_date, end=end_date)["Adj Close"]
+                # Utilisation de la période sélectionnée
+                df = yf.download(action['ticker'], period=time_span)["Adj Close"]
                 data[action['domaine']] = data.get(action['domaine'], []) + [df]
             except Exception as e:
                 st.write(f"Erreur lors du téléchargement pour {action['nom']}: {e}")
 
         return data
-
+    
     # Calcul des moyennes par secteur
     data = get_data()
     sector_averages = {}
@@ -53,7 +63,7 @@ def render_home(database):
 
     # Mise à jour des titres et des axes
     fig.update_layout(
-        title="Évolution moyenne des valeurs des actions par secteur au Canada (1 an)",
+        title="Évolution moyenne des valeurs des actions par secteur au Canada",
         xaxis_title="Date",
         legend_title_text='Secteur',
         autosize=False,
@@ -69,7 +79,4 @@ def render_home(database):
     )
     fig.update_yaxes(title_text="Prix moyen ($CAD)", secondary_y=False)
     fig.update_yaxes(title_text="Prix moyen ($CAD) - Technologie", secondary_y=True)
-
-    # Affichage avec Streamlit
-    st.title("Analyse des valeurs moyennes des actions par secteur au Canada")
     st.plotly_chart(fig)

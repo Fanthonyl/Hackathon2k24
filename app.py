@@ -51,7 +51,7 @@ database = [
 # Extraire les domaines et les entreprises correspondantes
 sectors_from_db = {domaine: [entry['ticker'] for entry in database if entry['domaine'] == domaine] for domaine in set(entry['domaine'] for entry in database)}
 
-# Sélection du secteur et des entreprises
+# Navigation bar with fixed pages
 st.sidebar.title("Navigation")
 page = st.sidebar.selectbox("Select Page", ["Home", "Pricer", "Analyse de Sentiments", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique","Board"])
 
@@ -123,11 +123,11 @@ elif page == "Analyse financière globale au Canada":
 
 elif page == "Analyse fondamentale":
     from analyse_fond import render_analyse_fond
-    render_analyse_fond(tickers, periode)
+    render_analyse_fond()
 
 elif page == "Analyse technique":
     from analyse_tech import render_analyse_tech
-    render_analyse_tech(tickers, periode)
+    render_analyse_tech(sectors_from_db)  # Pass no parameters here for tickers and periode
 
 elif page == "Board":
     from board import render_board
