@@ -112,7 +112,20 @@ with col1:
             df_plot.reset_index(inplace=True)
             df_plot.rename(columns={"index": "Date"}, inplace=True)
 
-            colors = [f'rgba(128, 0, {255 - i * 50}, 0.8)' for i in range(len(df_plot.columns) - 1)]
+            #colors = [f'rgba({i * 10}, {i * 30}, {i * 50}, 0.8)' for i in range(len(df_plot.columns) - 1)]
+            colors = [
+                'rgba(255, 182, 193, 0.8)',  # Light Pink
+                'rgba(135, 206, 250, 0.8)',  # Light Sky Blue
+                #'rgba(255, 250, 205, 0.8)',  # Lemon Chiffon
+                'rgba(144, 238, 144, 0.8)',  # Light Green
+                'rgba(238, 130, 238, 0.8)',  # Violet
+                'rgba(255, 222, 173, 0.8)',  # Navajo White
+                'rgba(221, 160, 221, 0.8)',  # Plum
+                'rgba(255, 192, 203, 0.8)',  # Pink
+                'rgba(176, 224, 230, 0.8)',  # Powder Blue
+                #'rgba(255, 228, 181, 0.8)'   # Moccasin
+            ]
+
 
             fig = make_subplots(specs=[[{"secondary_y": True}]])
             indice = 0
