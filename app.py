@@ -12,7 +12,7 @@ pages = {
         st.Page("analyse_tech.py", title="Analyse technique"),
         st.Page("sentiment.py", title="Analyse de Sentiments")
     ],
-    "Board": [st.Page("Gouvernance.py", title="Tableau de bord de gouvernance")],
+    "Gouvernance": [st.Page("board.py", title="Tableau de bord de gouvernance")],
     "Gestionnaire de portefeuille": [st.Page("pricer.py", title="Optimisation du portefeuille")]
 }
 
