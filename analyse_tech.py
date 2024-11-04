@@ -9,6 +9,11 @@ import logging
 from botocore.exceptions import ClientError
 from datetime import datetime, timedelta
 import uuid
+from data import database
+
+# Extraire les domaines et les entreprises correspondantes
+sectors_from_db = {domaine: [entry['ticker'] for entry in database if entry['domaine'] == domaine] for domaine in set(entry['domaine'] for entry in database)}
+
 
 # Setting up logging
 logging.basicConfig(format='[%(asctime)s] p%(process)s {%(filename)s:%(lineno)d} %(levelname)s - %(message)s', level=logging.INFO)
@@ -97,18 +102,20 @@ def calculate_bollinger_bands(data, window=20):
     lower_band = rolling_mean - (2 * rolling_std)
     return rolling_mean, upper_band, lower_band
 
-def render_analyse_tech(sectors_from_db):
 
-    st.title('Analyse Technique des Actions')
-    st.markdown("Alexia vous aide à suivre les tendances des principaux KPIs techniques par secteur ou entreprise, pour une évaluation approfondie de la performance.")
+st.title('Analyse Technique des Actions')
+st.markdown("Alexia vous aide à suivre les tendances des principaux KPIs techniques par secteur ou entreprise, pour une évaluation approfondie de la performance.")
 
-    # Initialize session state if necessary
-    if 'secteur' not in st.session_state:
-        st.session_state['secteur'] = 'Agroalimentaire'
-    if 'tickers' not in st.session_state:
-        st.session_state['tickers'] = ['SAP.TO']
-    if 'periode' not in st.session_state:
-        st.session_state['periode'] = '1mo'
+# Initialize session state if necessary
+if 'secteur' not in st.session_state:
+    st.session_state['secteur'] = 'Agroalimentaire'
+if 'tickers' not in st.session_state:
+    st.session_state['tickers'] = ['SAP.TO','L.TO']
+if 'periode' not in st.session_state:
+    st.session_state['periode'] = '1y'
+
+col1, col2 = st.columns(2)
+with col1:
 
     secteur = st.selectbox(
         "Choisir un secteur canadien :",
@@ -117,6 +124,7 @@ def render_analyse_tech(sectors_from_db):
         on_change=lambda: st.session_state.update({'secteur': secteur})
     )
 
+with col2:
     tickers = st.multiselect(
         "Choisissez une ou plusieurs entreprises (sigles financiers)",
         sectors_from_db[secteur],
@@ -124,6 +132,8 @@ def render_analyse_tech(sectors_from_db):
         on_change=lambda: st.session_state.update({'tickers': tickers})
     )
 
+col1, col2 = st.columns(2)
+with col1:
     periode = st.selectbox(
         "Sélectionnez la période",
         ["1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"],
@@ -133,72 +143,71 @@ def render_analyse_tech(sectors_from_db):
 
     if len(tickers) == 0:
         st.warning("Veuillez sélectionner au moins une entreprise.")
-        return
+        st.stop()
+    
+end_date = pd.to_datetime('today')
+start_date = end_date - pd.DateOffset(
+    months=int(periode[:-1]) * 12 if 'y' in periode else int(periode[:-2]) if 'mo' in periode else 0
+)
 
-    end_date = pd.to_datetime('today')
-    start_date = end_date - pd.DateOffset(
-        months=int(periode[:-1]) * 12 if 'y' in periode else int(periode[:-2]) if 'mo' in periode else 0
-    )
-
+with col2:
     chart_type = st.selectbox('Sélectionnez le type de graphique à afficher :', ['RSI', 'MACD', 'OBV'])
 
-    kpi_values = []
+kpi_values = []
 
-    for i, ticker in enumerate(tickers):
-        data = yf.download(ticker, start=start_date, end=end_date)
+for i, ticker in enumerate(tickers):
+    data = yf.download(ticker, start=start_date, end=end_date)
 
-        if not data.empty:
-            data['RSI'] = calculate_rsi(data)
-            data['MACD'], data['Signal_Line'] = calculate_macd(data)
-            data['OBV'] = calculate_obv(data)
-            data['Rolling Mean'], data['Upper Band'], data['Lower Band'] = calculate_bollinger_bands(data)
+    if not data.empty:
+        data['RSI'] = calculate_rsi(data)
+        data['MACD'], data['Signal_Line'] = calculate_macd(data)
+        data['OBV'] = calculate_obv(data)
+        data['Rolling Mean'], data['Upper Band'], data['Lower Band'] = calculate_bollinger_bands(data)
 
-            fig = go.Figure()
-            if chart_type == 'RSI':
-                fig.add_trace(go.Scatter(x=data.index, y=data['RSI'], mode='lines', name='RSI', line=dict(color='blue')))
-                fig.add_hline(y=30, line=dict(color='red', dash='dash'), annotation_text='Survendu', annotation_position='bottom right')
-                fig.add_hline(y=70, line=dict(color='green', dash='dash'), annotation_text='Suracheté', annotation_position='top right')
-                fig.update_layout(title=f'RSI pour {ticker}', xaxis_title='Date', yaxis_title='RSI')
+        fig = go.Figure()
+        if chart_type == 'RSI':
+            fig.add_trace(go.Scatter(x=data.index, y=data['RSI'], mode='lines', name='RSI', line=dict(color='blue')))
+            fig.add_hline(y=30, line=dict(color='red', dash='dash'), annotation_text='Survendu', annotation_position='bottom right')
+            fig.add_hline(y=70, line=dict(color='green', dash='dash'), annotation_text='Suracheté', annotation_position='top right')
+            fig.update_layout(title=f'RSI pour {ticker}', xaxis_title='Date', yaxis_title='RSI')
 
-            elif chart_type == 'MACD':
-                fig.add_trace(go.Scatter(x=data.index, y=data['MACD'], mode='lines', name='MACD', line=dict(color='blue')))
-                fig.add_trace(go.Scatter(x=data.index, y=data['Signal_Line'], mode='lines', name='Signal Line', line=dict(color='orange')))
-                fig.update_layout(title=f'MACD pour {ticker}', xaxis_title='Date', yaxis_title='MACD')
+        elif chart_type == 'MACD':
+            fig.add_trace(go.Scatter(x=data.index, y=data['MACD'], mode='lines', name='MACD', line=dict(color='blue')))
+            fig.add_trace(go.Scatter(x=data.index, y=data['Signal_Line'], mode='lines', name='Signal Line', line=dict(color='orange')))
+            fig.update_layout(title=f'MACD pour {ticker}', xaxis_title='Date', yaxis_title='MACD')
 
-            elif chart_type == 'OBV':
-                fig.add_trace(go.Scatter(x=data.index, y=data['OBV'], mode='lines', name='OBV', line=dict(color='purple')))
-                fig.update_layout(title=f'OBV pour {ticker}', xaxis_title='Date', yaxis_title='OBV')
+        elif chart_type == 'OBV':
+            fig.add_trace(go.Scatter(x=data.index, y=data['OBV'], mode='lines', name='OBV', line=dict(color='purple')))
+            fig.update_layout(title=f'OBV pour {ticker}', xaxis_title='Date', yaxis_title='OBV')
 
-            # Arrange graphs in two columns
-            if i % 2 == 0:
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.plotly_chart(fig, use_container_width=True)
-            else:
-                with col2:
-                    st.plotly_chart(fig, use_container_width=True)
-
-            # Collect KPI values for the agent
-            kpi_values.append({
-                "ticker": ticker,
-                "RSI": data['RSI'].iloc[-1],
-                "MACD": data['MACD'].iloc[-1],
-                "OBV": data['OBV'].iloc[-1],
-                # Add more KPIs if needed
-            })
-
+        # Arrange graphs in two columns
+        if i % 2 == 0:
+            col1, col2 = st.columns(2)
+            with col1:
+                st.plotly_chart(fig, use_container_width=True)
         else:
-            st.error(f'Aucune donnée trouvée pour {ticker}.')
+            with col2:
+                st.plotly_chart(fig, use_container_width=True)
 
-    # Add Analyser button
-    if st.button("Analyser"):
-        try:
+        # Collect KPI values for the agent
+        kpi_values.append({
+            "ticker": ticker,
+            "RSI": data['RSI'].iloc[-1],
+            "MACD": data['MACD'].iloc[-1],
+            "OBV": data['OBV'].iloc[-1],
+            # Add more KPIs if needed
+        })
+
+    else:
+        st.error(f'Aucune donnée trouvée pour {ticker}.')
+
+# Add Analyser button
+if st.button("Analyser"):
+    try:
+        with st.spinner("AlexIA est en pleine analyse..."):
             # Prepare the prompt
             insights = get_financial_insights(kpi_values)
             st.subheader("Insights sur les actions sélectionnées :")
             st.markdown(insights)
-        except Exception as e:
-            st.error(f"Erreur lors de l'analyse : {str(e)}")
-    else:
-        st.warning("Aucune analyse possible.")
-
+    except Exception as e:
+        st.error(f"Erreur lors de l'analyse : {str(e)}")

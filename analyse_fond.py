@@ -11,6 +11,7 @@ from botocore.exceptions import ClientError
 import numpy as np
 from datetime import datetime, timedelta
 import plotly.graph_objects as go  # Importer Plotly
+from data import database
 
 
 # setting logger
@@ -123,112 +124,113 @@ def get_financial_kpi(symbol, kpi):
 
     return None
 
-def render_analyse_fond(database):
-    st.title("Analyse fondamentale")
-    st.markdown("""Suivez les tendances des principaux KPIs financiers d'une entreprise, et comparer la à ses concurrents et aux autres secteurs pour une évaluation approfondie de la performance avec Alexia.""")
+
+st.title("Analyse fondamentale")
+st.markdown("""Suivez les tendances des principaux KPIs financiers d'une entreprise, et comparer la à ses concurrents et aux autres secteurs pour une évaluation approfondie de la performance avec Alexia.""")
+
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    entreprises = [item['nom'] for item in database]
+    entreprise_selectionnee = st.selectbox("Choisissez une entreprise", entreprises)
+    entreprise_info = next((item for item in database if item['nom'] == entreprise_selectionnee), None)
+    ticker_selectionne = entreprise_info['ticker'] if entreprise_info else None
+    domaine_selectionne = entreprise_info['domaine'] if entreprise_info else None
+
+with col2:
+    groupes = {
+        "Groupe 1": ['returnOnAssets', 'returnOnEquity'], #'Net Profit Margin'
+        "Groupe 2": ['debtToEquity', 'trailingPE'],
+        "Groupe 3": [], #freeCashflow', 'ebitda'
+        "Groupe 4": ['trailingEps']
+    }
+    tous_les_kpis = [kpi for kpis in groupes.values() for kpi in kpis]
+    kpi_selectionne = st.selectbox("Sélectionnez un Indicateurs financiers", options=tous_les_kpis)
+
+entreprises_meme_secteur = [item for item in database if item['domaine'] == domaine_selectionne]
+
+if entreprises_meme_secteur:
+    data_kpi = []
+    for entreprise in entreprises_meme_secteur:
+        kpi_valeur = get_financial_kpi(entreprise['ticker'], kpi_selectionne)
+        data_kpi.append({'Entreprise': entreprise['nom'], 'Valeur KPI': kpi_valeur})
+    
+    df_kpi = pd.DataFrame(data_kpi)
+    df_kpi_original = df_kpi.copy()
+    df_kpi = df_kpi[df_kpi['Entreprise'] != entreprise_selectionnee]
 
     col1, col2 = st.columns([3, 1])
 
     with col1:
-        entreprises = [item['nom'] for item in database]
-        entreprise_selectionnee = st.selectbox("Choisissez une entreprise", entreprises)
-        entreprise_info = next((item for item in database if item['nom'] == entreprise_selectionnee), None)
-        ticker_selectionne = entreprise_info['ticker'] if entreprise_info else None
-        domaine_selectionne = entreprise_info['domaine'] if entreprise_info else None
+        if ticker_selectionne:
+            data = yf.Ticker(ticker_selectionne).history(period="1y")
 
+            # Créer un graphique interactif avec Plotly
+            fig = go.Figure()
+
+            # Ajouter les traces pour Open, Low, High, Close, Adj Close
+            fig.add_trace(go.Scatter(x=data.index,y=data['Open'], mode='lines', name='Open',line=dict(color='orange')))
+            fig.add_trace(go.Scatter(x=data.index, y=data['High'],mode='lines', name='High',line=dict(color='green')))
+            fig.add_trace(go.Scatter(x=data.index, y=data['Low'], mode='lines',name='Low',line=dict(color='red')))
+            fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name='Close',line=dict(color='blue')))
+            fig.update_layout(xaxis_title="Date", yaxis_title="Valeur (EUR)", template="plotly_white")
+
+            st.plotly_chart(fig, use_container_width=True)        
     with col2:
-        groupes = {
-            "Groupe 1": ['returnOnAssets', 'returnOnEquity'], #'Net Profit Margin'
-            "Groupe 2": ['debtToEquity', 'trailingPE'],
-            "Groupe 3": [], #freeCashflow', 'ebitda'
-            "Groupe 4": ['trailingEps']
-        }
-        tous_les_kpis = [kpi for kpis in groupes.values() for kpi in kpis]
-        kpi_selectionne = st.selectbox("Sélectionnez un Indicateurs financiers", options=tous_les_kpis)
+        st.subheader("")
+        resultat = get_financial_kpi(ticker_selectionne, kpi_selectionne)
+        st.markdown(
+            f"<div style='text-align: center;'><br><br><h3 style='margin: 0;'>{ticker_selectionne}</h3></div>", 
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f"<div style='text-align: center;'><h2 style='margin: 0; line-height: 1;'>{resultat}</h2><br><br></div>", 
+            unsafe_allow_html=True
+        )
 
-    entreprises_meme_secteur = [item for item in database if item['domaine'] == domaine_selectionne]
+        mediane_secteur = df_kpi_original['Valeur KPI'].median()
+        st.markdown(
+            f"<div style='text-align: center;'><h3 style='margin: 0;'>{domaine_selectionne} (médiane)</h3></div>", 
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            f"<div style='text-align: center;'><h2 style='margin: 0; line-height: 1;'>{mediane_secteur:.3f}</h2></div>", 
+            unsafe_allow_html=True
+        )
 
-    if entreprises_meme_secteur:
-        data_kpi = []
-        for entreprise in entreprises_meme_secteur:
+
+    if not df_kpi.empty:
+        display_kpis_inline(df_kpi, f"{kpi_selectionne} pour les autres entreprises dans le secteur {domaine_selectionne}")
+    else:
+        st.write("Aucune donnée à afficher pour les entreprises dans le même secteur.")
+
+    secteurs_distincts = set(item['domaine'] for item in database if item['domaine'] != domaine_selectionne)
+    medianes_par_secteur = []
+    for secteur in secteurs_distincts:
+        entreprises_autre_secteur = [item for item in database if item['domaine'] == secteur]
+        data_kpi_secteur = []
+        
+        for entreprise in entreprises_autre_secteur:
             kpi_valeur = get_financial_kpi(entreprise['ticker'], kpi_selectionne)
-            data_kpi.append({'Entreprise': entreprise['nom'], 'Valeur KPI': kpi_valeur})
+            if kpi_valeur is not None:
+                data_kpi_secteur.append(kpi_valeur)
         
-        df_kpi = pd.DataFrame(data_kpi)
-        df_kpi_original = df_kpi.copy()
-        df_kpi = df_kpi[df_kpi['Entreprise'] != entreprise_selectionnee]
-
-        col1, col2 = st.columns([3, 1])
-
-        with col1:
-            if ticker_selectionne:
-                data = yf.Ticker(ticker_selectionne).history(period="1y")
-
-                # Créer un graphique interactif avec Plotly
-                fig = go.Figure()
-
-                # Ajouter les traces pour Open, Low, High, Close, Adj Close
-                fig.add_trace(go.Scatter(x=data.index,y=data['Open'], mode='lines', name='Open',line=dict(color='orange')))
-                fig.add_trace(go.Scatter(x=data.index, y=data['High'],mode='lines', name='High',line=dict(color='green')))
-                fig.add_trace(go.Scatter(x=data.index, y=data['Low'], mode='lines',name='Low',line=dict(color='red')))
-                fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name='Close',line=dict(color='blue')))
-                fig.update_layout(xaxis_title="Date", yaxis_title="Valeur (EUR)", template="plotly_white")
-
-                st.plotly_chart(fig, use_container_width=True)        
-        with col2:
-            resultat = get_financial_kpi(ticker_selectionne, kpi_selectionne)
-            st.markdown(
-                f"<div style='text-align: center;'><br><br><h3 style='margin: 0;'>{ticker_selectionne}</h3></div>", 
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                f"<div style='text-align: center;'><h2 style='margin: 0; line-height: 1;'>{resultat}</h2><br><br></div>", 
-                unsafe_allow_html=True
-            )
-
-            mediane_secteur = df_kpi_original['Valeur KPI'].median()
-            st.markdown(
-                f"<div style='text-align: center;'><h3 style='margin: 0;'>{domaine_selectionne} (médiane)</h3></div>", 
-                unsafe_allow_html=True
-            )
-            st.markdown(
-                f"<div style='text-align: center;'><h2 style='margin: 0; line-height: 1;'>{mediane_secteur:.3f}</h2></div>", 
-                unsafe_allow_html=True
-            )
-
-
-        if not df_kpi.empty:
-            display_kpis_inline(df_kpi, f"{kpi_selectionne} pour les autres entreprises dans le secteur {domaine_selectionne}")
-        else:
-            st.write("Aucune donnée à afficher pour les entreprises dans le même secteur.")
-
-        secteurs_distincts = set(item['domaine'] for item in database if item['domaine'] != domaine_selectionne)
-        medianes_par_secteur = []
-        for secteur in secteurs_distincts:
-            entreprises_autre_secteur = [item for item in database if item['domaine'] == secteur]
-            data_kpi_secteur = []
-            
-            for entreprise in entreprises_autre_secteur:
-                kpi_valeur = get_financial_kpi(entreprise['ticker'], kpi_selectionne)
-                if kpi_valeur is not None:
-                    data_kpi_secteur.append(kpi_valeur)
-            
-            if len(data_kpi_secteur) > 0:
-                mediane_secteur = np.median(data_kpi_secteur, axis=0)
-                medianes_par_secteur.append({'Secteur': secteur, 'Valeur mediane du KPI': mediane_secteur})
-        
-        df_medianes_secteurs = pd.DataFrame(medianes_par_secteur)
-        if not df_medianes_secteurs.empty:
-            display_kpis_inline(df_medianes_secteurs, f"{kpi_selectionne} médian pour les autres secteurs")
-        else:
-            st.write("Aucune donnée à afficher pour les autres secteurs.")
+        if len(data_kpi_secteur) > 0:
+            mediane_secteur = np.median(data_kpi_secteur, axis=0)
+            medianes_par_secteur.append({'Secteur': secteur, 'Valeur mediane du KPI': mediane_secteur})
     
-    # Get financial insights from AWS Bedrock
-    st.subheader("Insights Financiers")
-    with st.spinner("AlexIA réfléchit profondément..."):
-        try:
-            financial_insights = get_financial_insights(ticker_selectionne, kpi_selectionne, mediane_secteur, df_medianes_secteurs)
-            st.write(financial_insights)
-        except Exception as e:
-            st.error("Erreur lors de l'obtention de l'analyse.")
-            logger.error(f"Erreur: {e}")
+    df_medianes_secteurs = pd.DataFrame(medianes_par_secteur)
+    if not df_medianes_secteurs.empty:
+        display_kpis_inline(df_medianes_secteurs, f"{kpi_selectionne} médian pour les autres secteurs")
+    else:
+        st.write("Aucune donnée à afficher pour les autres secteurs.")
+
+# Get financial insights from AWS Bedrock
+st.subheader("Insights Financiers")
+with st.spinner("AlexIA réfléchit profondément..."):
+    try:
+        financial_insights = get_financial_insights(ticker_selectionne, kpi_selectionne, mediane_secteur, df_medianes_secteurs)
+        st.write(financial_insights)
+    except Exception as e:
+        st.error("Erreur lors de l'obtention de l'analyse.")
+        logger.error(f"Erreur: {e}")
