@@ -52,8 +52,29 @@ database = [
 sectors_from_db = {domaine: [entry['ticker'] for entry in database if entry['domaine'] == domaine] for domaine in set(entry['domaine'] for entry in database)}
 
 # Navigation bar with fixed pages
-st.sidebar.title("Navigation")
-page = st.sidebar.radio("Select Page", ["Home", "Pricer", "Sentiment", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique", "Board"])
+#Logo dans la sidebar
+st.sidebar.image('alexia.png', use_column_width=True)
+#le titre de la sidebar, centré
+st.sidebar.markdown(
+    """
+    <style>
+    .sidebar-title {
+        text-align: center;
+        color: white;
+        font-size: 20px !important; /* Ensures the font size is applied */
+        margin: 0;
+        padding: 0;
+        width: 100%;
+    }
+    </style>
+    <h1 class='sidebar-title'>La voix des marchés financiers</h1>
+    """,
+    unsafe_allow_html=True
+)
+
+st.sidebar.markdown("\n\n")
+st.sidebar.markdown("\n\n")
+page = st.sidebar.radio("Select Page", ["Home", "Analyse financière globale", "Analyse fondamentale", "Analyse technique", "Sentiment", "Board", "Pricer"])
 
 # Passer les variables globales aux fonctions de rendu des pages
 if page == "Home":

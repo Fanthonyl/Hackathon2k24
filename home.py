@@ -43,7 +43,30 @@ agent_id = 'ACVSW7ULXC'
 agent_alias_id = 'FGVZUPEISZ'
 
 def render_home(database):
-    st.title("Analyse des valeurs moyennes des actions par secteur au Canada")
+    st.markdown(
+        """
+        <style>
+        .center-text {
+            text-align: center;
+            font-size: 26px !important; /* This affects all nested elements unless overridden */
+            font-weight: bold;
+            color: white;
+        }
+        .highlight {
+            color: #B163CB !important; /* Only color is changed for highlighted text */
+        }
+        </style>
+        <div class="center-text">
+            <p>Bienvenue ! Mon nom est Alex<span class="highlight">IA</span> (<span class="highlight">A</span>dvanced <span class="highlight">L</span>earning for <span class="highlight">E</span>conomic e<span class="highlight">X</span>ploration and <span class="highlight">I</span>nteractive <span class="highlight">A</span>nalysis) !</p>
+            <p>Je suis votre guide pour explorer les marchés financiers canadiens 👋 </p>
+            <p>Pour commencer, explorons les tendances des actions par secteur économique. Laissez Alex<span class="highlight">IA</span> se faire la voix des marchés !</p>
+            <br>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.subheader("Analyse des valeurs moyennes des actions par secteur au Canada")
 
     time_span = st.selectbox(
         "Sélectionnez la période pour l'analyse:",
@@ -62,7 +85,7 @@ def render_home(database):
         return data
 
     # Show a spinner while loading the data and generating the plot
-    with st.spinner("Chargement des données et génération du graphique..."):
+    with st.spinner("AlexIA s'applique à dessiner..."):
         data = get_data()
         sector_averages = {}
         for secteur, valeurs in data.items():
@@ -106,17 +129,18 @@ def render_home(database):
         return downsampled_data
 
     # Create prompt text with downsampled data
-    prompt = "Analyse the following stock performance trends:\n\n"
+    prompt = "Analyse the following stock performance trends:\n\n. Begin with an introductory sentence. Then please ensure that the format is readable with nice breaf and separated individual paragraphs. Finish with a comparative summary at the end. Write in French. \n\n"
+    prompt += """Now let's get started with the data:\n\n"""
     downsampled_data = get_downsampled_prompt(df_plot)
     for col, series in downsampled_data:
         trend_data = series.to_string(index=False)
         prompt += f"Secteur: {col}\n{trend_data}\n\n"
 
     session_id = str(uuid.uuid1())
-    st.subheader("Financial Analysis Insights")
+    st.subheader("Insights financiers")
     
     # Show a spinner while waiting for the insights
-    with st.spinner("Génération des insights financiers..."):
+    with st.spinner("AlexIA réfléchit profondément..."):
         try:
             insights = bedrock_wrapper.invoke_agent(agent_id, agent_alias_id, session_id, prompt)
             st.write(insights)
