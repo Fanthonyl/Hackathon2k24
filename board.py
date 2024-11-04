@@ -184,35 +184,36 @@ if ticker:
     st.subheader(f"Tableau de bord des dirigeants de {ticker}")
 
     try:
-        df , board_risk = get_executive_info(ticker)
-        if not df.empty:
-            st.dataframe(df.set_index( ['Nom']), use_container_width=True)
-            st.subheader("Risque du conseil d'administration")
-            # Affichage de la jauge de risque
-            if board_risk != 'Non disponible':
-                fig = go.Figure(go.Indicator(
-                    mode="gauge+number",
-                    value=board_risk,
-                    title={'text': "Risque du Conseil d'Administration"},
-                    gauge={
-                        'axis': {'range': [1, 10]},
-                        'bar': {'color': 'red' if board_risk >= 7 else 'orange' if board_risk >= 4 else 'green'},
-                        'steps': [
-                            {'range': [1, 4], 'color': 'lightgreen'},
-                            {'range': [4, 7], 'color': 'yellow'},
-                            {'range': [7, 10], 'color': 'lightcoral'}    
-                            ],
-                        'threshold': {
-                            'line': {'color': "black", 'width': 4},
-                            'value': board_risk
+        with st.spinner("Chargement du board en cours..."):
+            df , board_risk = get_executive_info(ticker)
+            if not df.empty:
+                st.dataframe(df.set_index( ['Nom']), use_container_width=True)
+                st.subheader("Risque du conseil d'administration")
+                # Affichage de la jauge de risque
+                if board_risk != 'Non disponible':
+                    fig = go.Figure(go.Indicator(
+                        mode="gauge+number",
+                        value=board_risk,
+                        title={'text': "Risque du Conseil d'Administration"},
+                        gauge={
+                            'axis': {'range': [1, 10]},
+                            'bar': {'color': 'red' if board_risk >= 7 else 'orange' if board_risk >= 4 else 'green'},
+                            'steps': [
+                                {'range': [1, 4], 'color': 'lightgreen'},
+                                {'range': [4, 7], 'color': 'yellow'},
+                                {'range': [7, 10], 'color': 'lightcoral'}    
+                                ],
+                            'threshold': {
+                                'line': {'color': "black", 'width': 4},
+                                'value': board_risk
+                            }
                         }
-                    }
-                ))
-                st.plotly_chart(fig)
+                    ))
+                    st.plotly_chart(fig)
+                else:
+                    st.info("Le risque du conseil d'administration est : Non disponible")
             else:
-                st.info("Le risque du conseil d'administration est : Non disponible")
-        else:
-            st.warning("Aucune information sur les dirigeants n'a été trouvée pour cette entreprise.")
+                st.warning("Aucune information sur les dirigeants n'a été trouvée pour cette entreprise.")
     except Exception as e:
         st.error(f"Une erreur s'est produite : {e}")
 else:
