@@ -6,8 +6,8 @@ st.set_page_config(page_title="AlexIA", page_icon="alexia2.png", layout="wide")
 # Configurer les pages pour la navigation
 pages = {
     "Home": [st.Page("home.py", title="Home")],
-    "Analyse": [
-        st.Page("analyse_glob.py", title="Analyse financière globale au Canada"),
+    "Outils d'Analyse": [
+        st.Page("analyse_glob.py", title="Analyse financière globale (Canada)"),
         st.Page("analyse_fond.py", title="Analyse fondamentale"),
         st.Page("analyse_tech.py", title="Analyse technique"),
         st.Page("sentiment.py", title="Analyse de Sentiments")
@@ -28,7 +28,7 @@ st.sidebar.markdown(
     .sidebar-title {
         text-align: center;
         color: white;
-        font-size: 20px !important; /* Assure que la taille de la police est appliquée */
+        font-size: 15px !important; /* Assure que la taille de la police est appliquée */
         margin: 0;
         padding: 0;
         width: 100%;
