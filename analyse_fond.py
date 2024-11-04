@@ -126,7 +126,7 @@ def get_financial_kpi(symbol, kpi):
 
 
 st.title("Analyse fondamentale")
-st.markdown("""Suivez les tendances des principaux KPIs financiers d'une entreprise, et comparer la à ses concurrents et aux autres secteurs pour une évaluation approfondie de la performance avec Alexia.""")
+st.markdown("""Suivez les tendances des principaux indicateurs financiers d'une entreprise, et comparez la à ses concurrents et aux autres secteurs pour une évaluation approfondie de la performance avec Alexia.""")
 
 col1, col2 = st.columns([3, 1])
 
