@@ -107,6 +107,7 @@ def multi_colormap_semi(database, selected_company, other_companies):
 def render_sentiment(database):
 
 
+
     if 'fig_multi_colormap' not in st.session_state:
         st.session_state['fig_multi_colormap'] = None
 
@@ -115,6 +116,8 @@ def render_sentiment(database):
 
 
     st.title("Analyse de Sentiments")
+    
+    st.image("alexia.png", caption="Description de l'image")
     
     # Extraire les secteurs à partir de la base de données
     sectors_from_db = get_sectors_from_db(database)
