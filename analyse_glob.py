@@ -136,5 +136,3 @@ Les variations annuelles des dépenses de consommation, du taux d’intérêt et
 tandis que le graphique du PIB présente des valeurs absolues.
 
 """)
-
-st.subheader("Board")
