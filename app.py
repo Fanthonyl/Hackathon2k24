@@ -5,7 +5,7 @@ st.set_page_config(page_title="AlexIA", page_icon="alexia2.png", layout="wide")
 
 # Configurer les pages pour la navigation
 pages = {
-    "Acceuil": [st.Page("home.py", title="Acceuil")],
+    "Accueil": [st.Page("home.py", title="Accueil")],
     "Outils d'Analyse": [
         st.Page("analyse_glob.py", title="Analyse économique (Canada)"),
         st.Page("analyse_fond.py", title="Analyse fondamentale"),
