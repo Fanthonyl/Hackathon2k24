@@ -80,6 +80,7 @@ summary_df.set_index('Year', inplace=True)
 
 
 # Sort DataFrame by Year in descending order
+##auto 
 summary_df.sort_index(ascending=False, inplace=True)
 
 # Create combined plot with all curves
@@ -89,25 +90,25 @@ fig = make_subplots(specs=[[{"secondary_y": True}]])
 fig.add_trace(
     go.Scatter(x=consumer_spending_data['Year'], 
             y=consumer_spending_data['Consumer Spending Annual Variation (%)'], 
-            name="Consumer Spending Annual Variation (%)"),
+            name="Variation annuelle des dépenses de consommation (%)"),
     secondary_y=False
 )
 fig.add_trace(
     go.Scatter(x=gdp_data['Year'], 
             y=gdp_data['GDP Annual Variation (%)'], 
-            name="GDP Annual Variation (%)"),
+            name="Variation annuelle du PIB (%)"),
     secondary_y=False
 )
 fig.add_trace(
     go.Scatter(x=inflation_data['Year'], 
             y=inflation_data['Inflation Annual Variation (%)'], 
-            name="Inflation Annual Variation (%)"),
+            name="Variation annuelle de l’inflation (%)"),
     secondary_y=False
 )
 fig.add_trace(
     go.Scatter(x=interest_rate_data['Year'], 
             y=interest_rate_data['Interest Rate Annual Variation (%)'], 
-            name="Interest Rate Annual Variation (%)"),
+            name="Variation annuelle du taux directeur (%)"),
     secondary_y=True
 )
 
@@ -116,23 +117,21 @@ fig.update_layout(
     xaxis_title="Année",
     yaxis_title="Variation annuelle (%)",
     yaxis2_title="Taux d\'intérêt (%)",
+    title="Évolution des Indicateurs Économiques",
     legend_title="Indicateurs",
-    template="plotly_white"
+    template="plotly_white",
+    legend=dict(font=dict(size=15)),  
 )
 
-st.title("Analyse des valeurs moyennes des actions par secteur au Canada")
+st.title("Analyse économique (Canada)")
+
+# Additional information or explanations
+st.markdown("""**Suivez avec Alexia les tendances des principaux indicateurs économiques pour une idée globale du marché canadien de 2014 à aujourd’hui.**""")
+
 # Display the combined plot
 st.plotly_chart(fig)
 
 # Button to display detailed table
 if st.button("Afficher la table de données"):
     st.subheader("Tableau des indicateurs financiers")
-    st.dataframe(summary_df)
-
-# Additional information or explanations
-st.markdown("""
-Ce tableau de bord présente les principaux indicateurs financiers pour le Canada de 2014 à aujourd’hui, avec des filtres sélectionnés.
-Les variations annuelles des dépenses de consommation, du taux d’intérêt et de l’inflation donnent une idée des changements d’une année à l’autre. 
-tandis que le graphique du PIB présente des valeurs absolues.
-
-""")
+    st.dataframe(summary_df, use_container_width=True)
