@@ -221,6 +221,7 @@ def render_analyse_fond(database):
 
                 st.plotly_chart(fig, use_container_width=True)        
         with col2:
+            st.subheader("")
             resultat = get_financial_kpi(ticker_selectionne, kpi_selectionne)
             st.markdown(f"<div style='text-align: center;'><h3>{ticker_selectionne}</h3></div>", unsafe_allow_html=True)
             st.markdown(f"<div style='text-align: center;'><h2>{resultat}</h2></div>", unsafe_allow_html=True)

@@ -136,5 +136,3 @@ def render_analyse_glob():
     tandis que le graphique du PIB présente des valeurs absolues.
 
     """)
-
-    st.subheader("Board")
