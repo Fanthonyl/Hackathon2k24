@@ -84,7 +84,19 @@ def multi_colormap_semi(database, selected_company, other_companies):
         marker=dict(line=dict(width=0))  # Suppression des contours des barres
     ))
 
-
+    # Ajouter une ligne pointillée à 50%
+    fig.add_shape(
+        type="line",
+        x0=50,
+        x1=50,
+        y0=-0.5,
+        y1=len(noms) - 0.5,
+        line=dict(
+            color="#964aff",
+            width=1,
+            dash="dashdot",
+        ),
+    )
 
     fig.update_layout(
         height=150 + len(noms) * 50,
@@ -96,23 +108,21 @@ def multi_colormap_semi(database, selected_company, other_companies):
         bargap=0.1  # Réduction de l'espace entre les barres pour les rendre plus fines
     )
 
-
     st.session_state['fig_multi_colormap'] = fig  # Stocker dans l'état après la création
-    #st.plotly_chart(fig, key="multi_colormap")  # Afficher avec une clé unique
+    st.plotly_chart(fig, key="multi_colormap")  # Afficher avec une clé unique
+
+
 
 
 
 
 
 def render_sentiment(database):
-
-
     if 'fig_multi_colormap' not in st.session_state:
         st.session_state['fig_multi_colormap'] = None
 
     if 'fig_entreprise_vs_clients' not in st.session_state:
         st.session_state['fig_entreprise_vs_clients'] = None
-
 
     st.title("Analyse de Sentiments")
     
@@ -135,13 +145,13 @@ def render_sentiment(database):
         formatted_companies
     )
 
-    # Ajout du bouton pour exécuter l'analyse de l'entreprise vs clients
-    if st.button("Exécuter l'analyse Entreprise vs Clients"):
-        entreprise_vs_clients(selected_company.split(' (')[0])
-    
     # Afficher la figure existante `entreprise_vs_clients` si elle est déjà générée
     if st.session_state['fig_entreprise_vs_clients'] is not None:
         st.plotly_chart(st.session_state['fig_entreprise_vs_clients'], key="entreprise_vs_clients_reloaded")
+
+    # Ajout du bouton pour exécuter l'analyse de l'entreprise vs clients
+    if st.button("Exécuter l'analyse Entreprise vs Clients"):
+        entreprise_vs_clients(selected_company.split(' (')[0])
 
     # Ajout de la case à cocher pour sélectionner/désélectionner toutes les entreprises
     st.subheader("Sélection des autres entreprises")
@@ -159,14 +169,14 @@ def render_sentiment(database):
         try:
             company_name = selected_company.split(' (')[0]
             multi_colormap_semi(database, company_name, other_companies)
-
         except Exception as e:
             st.error(f"Une erreur est survenue lors de l'analyse: {str(e)}")
 
-    
     # Afficher la figure existante `multi_colormap_semi` si elle est déjà générée
     if st.session_state['fig_multi_colormap'] is not None:
         st.plotly_chart(st.session_state['fig_multi_colormap'], key="multi_colormap_reloaded")
+
+
 
 
 
@@ -251,7 +261,6 @@ def entreprise_vs_clients(nom):
         )
     ])
 
-
     fig.update_layout(
         height=250,
         title=f"Taux de sentiments positifs pour {nom_original}, communiqués par eux-mêmes et par les utilisateurs",
@@ -264,4 +273,4 @@ def entreprise_vs_clients(nom):
     )
 
     st.session_state['fig_entreprise_vs_clients'] = fig  # Stocker dans l'état après la création
-    #st.plotly_chart(fig, key="entreprise_vs_clients")  # Afficher avec une clé unique
+    st.plotly_chart(fig, key="entreprise_vs_clients")  # Afficher avec une clé unique

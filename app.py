@@ -53,10 +53,10 @@ sectors_from_db = {domaine: [entry['ticker'] for entry in database if entry['dom
 
 # Sélection du secteur et des entreprises
 st.sidebar.title("Navigation")
-page = st.sidebar.selectbox("Select Page", ["Home", "Pricer", "Sentiment", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique","Board"])
+page = st.sidebar.selectbox("Select Page", ["Home", "Pricer", "Analyse de Sentiments", "Analyse financière globale au Canada", "Analyse fondamentale", "Analyse technique","Board"])
 
 # Liste des pages où certains widgets doivent être désactivés
-pages_disabled_tickers_periode = ["Home", "Analyse financière globale au Canada", "Sentiment"]
+pages_disabled_tickers_periode = ["Home", "Analyse financière globale au Canada", "Analyse de Sentiments"]
 pages_disabled_secteur = ["Home","Analyse financière globale au Canada"]
 
 # Vérifier si la page actuelle est dans la liste des pages désactivées

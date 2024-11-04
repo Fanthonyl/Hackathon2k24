@@ -84,7 +84,19 @@ def multi_colormap_semi(database, selected_company, other_companies):
         marker=dict(line=dict(width=0))  # Suppression des contours des barres
     ))
 
-
+    # Ajouter une ligne pointillée à 50%
+    fig.add_shape(
+        type="line",
+        x0=50,
+        x1=50,
+        y0=-0.5,
+        y1=len(noms) - 0.5,
+        line=dict(
+            color="#964aff",
+            width=1,
+            dash="dashdot",
+        ),
+    )
 
     fig.update_layout(
         height=150 + len(noms) * 50,
@@ -95,7 +107,6 @@ def multi_colormap_semi(database, selected_company, other_companies):
         barmode='group',
         bargap=0.1  # Réduction de l'espace entre les barres pour les rendre plus fines
     )
-
 
     st.session_state['fig_multi_colormap'] = fig  # Stocker dans l'état après la création
     #st.plotly_chart(fig, key="multi_colormap")  # Afficher avec une clé unique
@@ -250,7 +261,6 @@ def entreprise_vs_clients(nom):
             width=0.2,
         )
     ])
-
 
     fig.update_layout(
         height=250,
