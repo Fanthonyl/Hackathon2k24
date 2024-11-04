@@ -8,12 +8,14 @@ def render_pricer(database):
     # Streamlit app
     st.title("Optimisateur de Portefeuille")
 
-    # Input: portefeuille initial
-    budget = st.number_input("Entrez votre budget total (en CAD):", min_value=0.0, step=100.0)
-
-    # Input: choix des entreprises
-    options = [stock['nom'] for stock in database]
-    selected_stocks = st.multiselect("Choisissez les entreprises dans lesquelles investir:", options)
+    col1, col2 = st.columns([2, 6])
+    with col1:
+        # Input: portefeuille initial
+        budget = st.number_input("Entrez votre budget total (en CAD):", min_value=0.0, step=100.0)
+    with col2:
+        # Input: choix des entreprises
+        options = [stock['nom'] for stock in database]
+        selected_stocks = st.multiselect("Choisissez les entreprises dans lesquelles investir:", options)
 
     if budget > 0 and selected_stocks:
         # Filtrer les tickers sélectionnés
